@@ -6,12 +6,11 @@ module OTHER #(parameter data_width = 16) (
        	output reg [data_width - 1: 0] C);
 
     always @(*) begin
-        if (FuncCode === `FUNC_ID)
-            C <= A;
-        else if (FuncCode === `FUNC_TCP)
-            C <= ~A + 1;
-        else // FuncCode === `FUNC_ZERO
-            C <= 0;
+        case(FuncCode)
+            `FUNC_ID: C <= A;
+            `FUNC_TCP: C <= ~A + 1;
+            default: C <= 0;  // FuncCode === `FUNC_ZERO
+        endcase
     end
 
 endmodule

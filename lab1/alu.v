@@ -24,19 +24,29 @@ initial begin
 end
 
 always @(*) begin
-	if (FuncCode >= 4'b0000 && FuncCode <= 4'b0001) begin
-		C <= sumandsub_c;
-		OverflowFlag <= sumandsub_overflowflag;
-	end else if (FuncCode >= 4'b0011 && FuncCode <= 4'b1001) begin
-		C <= bitwise_c;
-		OverflowFlag <= 0;
-	end else if (FuncCode >= 4'b1010 && FuncCode <= 4'b1101) begin
-		C <= shift_c;
-		OverflowFlag <= 0;
-	end else begin
-		C <= other_c;
-		OverflowFlag <= 0;
-	end
+	case (FuncCode)
+		`FUNC_ADD, `FUNC_SUB:
+			begin
+				C <= sumandsub_c;
+				OverflowFlag <= sumandsub_overflowflag;
+			end
+		`FUNC_NOT, `FUNC_AND, `FUNC_OR, `FUNC_NAND,
+		`FUNC_NOR, `FUNC_XOR, `FUNC_XNOR:
+			begin
+				C <= bitwise_c;
+				OverflowFlag <= 0;
+			end
+		`FUNC_LLS, `FUNC_LRS, `FUNC_ALS, `FUNC_ARS:
+			begin
+				C <= shift_c;
+				OverflowFlag <= 0;
+			end
+		default:
+			begin
+				C <= other_c;
+				OverflowFlag <= 0;
+			end
+	endcase
 end
 
 SUMANDSUB my_sumandsub(

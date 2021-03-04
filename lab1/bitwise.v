@@ -8,20 +8,15 @@ module BITWISE #(parameter data_width = 16) (
     
 
     always @(*) begin
-        if (FuncCode === `FUNC_NOT)
-            C <= ~A;
-        else if (FuncCode === `FUNC_AND)
-            C <= A & B;
-        else if (FuncCode === `FUNC_OR)
-            C <= A | B;
-        else if (FuncCode === `FUNC_NAND)
-            C <= ~(A & B);
-        else if (FuncCode === `FUNC_NOR)
-            C <= ~(A | B);
-        else if (FuncCode === `FUNC_XOR)
-            C <= A ^ B;
-        else // FuncCode === `FUNC_XNOR
-            C <= ~(A ^ B);
+        case (FuncCode)
+            `FUNC_NOT: C <= ~A;
+            `FUNC_AND: C <= A & B;
+            `FUNC_OR: C <= A | B;
+            `FUNC_NAND: C <= ~(A & B);
+            `FUNC_NOR: C <= ~(A | B);
+            `FUNC_XOR: C <= A ^ B;
+            default: C <= ~(A ^ B);  // FuncCode === `FUNC_XNOR
+        endcase
     end
 
 endmodule
