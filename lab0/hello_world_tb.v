@@ -8,6 +8,8 @@ module hello_world_tb();
     initial begin
         $display ("time\t clk reset enable counter");
         $monitor ("%T\t %b %b %b %b", $time, clock_r, reset_r, enable_r, counter_out);
+        $dumpfile("hello_world.vcd");
+        $dumpvars(0, hello_world_tb);
 
         clock_r <= 1;
         reset_r <= 0;
