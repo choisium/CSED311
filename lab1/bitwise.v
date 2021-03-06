@@ -1,21 +1,21 @@
 `include "alu_func.v"
 
 module BITWISE #(parameter data_width = 16) (
-	input [data_width - 1 : 0] A, 
-	input [data_width - 1 : 0] B, 
-	input [3 : 0] FuncCode,
-       	output reg [data_width - 1: 0] C);
-    
+    input [data_width - 1 : 0] operand1,
+    input [data_width - 1 : 0] operand2,
+    input [3 : 0] opCode,
+        output reg [data_width - 1: 0] result);
+
 
     always @(*) begin
-        case (FuncCode)
-            `FUNC_NOT: C <= ~A;
-            `FUNC_AND: C <= A & B;
-            `FUNC_OR: C <= A | B;
-            `FUNC_NAND: C <= ~(A & B);
-            `FUNC_NOR: C <= ~(A | B);
-            `FUNC_XOR: C <= A ^ B;
-            default: C <= ~(A ^ B);  // FuncCode === `FUNC_XNOR
+        case (opCode)
+            `FUNC_NOT: result <= ~operand1;
+            `FUNC_AND: result <= operand1 & operand2;
+            `FUNC_OR: result <= operand1 | operand2;
+            `FUNC_NAND: result <= ~(operand1 & operand2);
+            `FUNC_NOR: result <= ~(operand1 | operand2);
+            `FUNC_XOR: result <= operand1 ^ operand2;
+            default: result <= ~(operand1 ^ operand2);  // opCode === `FUNC_XNOR
         endcase
     end
 

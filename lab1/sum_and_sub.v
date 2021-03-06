@@ -1,22 +1,24 @@
 `include "alu_func.v"
 
 module SUMANDSUB #(parameter data_width = 16) (
-	input [data_width - 1 : 0] A, 
-	input [data_width - 1 : 0] B,
-	input [3 : 0] FuncCode,
-       	output reg [data_width - 1: 0] C,
-       	output reg OverflowFlag);
+	input [data_width - 1 : 0] operand1,
+	input [data_width - 1 : 0] operand2,
+	input [3 : 0] opCode,
+        output reg [data_width - 1: 0] result,
+        output reg isOverflow);
     
-    wire [data_width - 1: 0] result;
+    wire [data_width - 1: 0] temp;
 
-    assign result = FuncCode === `FUNC_ADD ? A + B : A - B;
+    assign temp = opCode === `FUNC_ADD ? operand1 + operand2 : operand1 - operand2;
 
     always @(*) begin
-        C <= result;
-        if (FuncCode === `FUNC_ADD ? (A[data_width - 1] === B[data_width - 1]) && (A[data_width - 1] !== result[data_width -1]) : (A[data_width - 1] !== B[data_width - 1]) && (A[data_width - 1] !== result[data_width -1]))
-            OverflowFlag <= 1;
+        result <= temp;
+        if (opCode === `FUNC_ADD
+            ? (operand1[data_width - 1] === operand2[data_width - 1]) && (operand1[data_width - 1] !== temp[data_width -1])
+            : (operand1[data_width - 1] !== operand2[data_width - 1]) && (operand1[data_width - 1] !== temp[data_width -1]))
+            isOverflow <= 1;
         else
-            OverflowFlag <= 0;
+            isOverflow <= 0;
     end
 
 endmodule

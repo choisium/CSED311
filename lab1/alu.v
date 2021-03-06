@@ -50,30 +50,30 @@ always @(*) begin
 end
 
 SUMANDSUB my_sumandsub(
-	.A(A),
-	.B(B),
-	.FuncCode(FuncCode),
-	.C(sumandsub_c),
-	.OverflowFlag(sumandsub_overflowflag)
+	.operand1(A),
+	.operand2(B),
+	.opCode(FuncCode),
+	.result(sumandsub_c),
+	.isOverflow(sumandsub_overflowflag)
 );
 
 BITWISE my_bitwise(
-	.A(A),
-	.B(B),
-	.FuncCode(FuncCode),
-	.C(bitwise_c)
+	.operand1(A),
+	.operand2(B),
+	.opCode(FuncCode),
+	.result(bitwise_c)
 );
 
 SHIFT my_shift(
-	.A(A),
-	.FuncCode(FuncCode),
-	.C(shift_c)
+	.operand(A),
+	.opCode(FuncCode),
+	.result(shift_c)
 );
 
 OTHER my_other(
-	.A(A),
-	.FuncCode(FuncCode),
-	.C(other_c)
+	.operand(A),
+	.opCode(FuncCode),
+	.result(other_c)
 );
 
 endmodule

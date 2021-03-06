@@ -4,7 +4,7 @@
 */
 
 `include "alu.v"
-`include "alu_func.vh"
+`include "alu_func.v"
 
 `timescale 100ps / 100ps
 
@@ -24,7 +24,7 @@ wire [`data_width - 1 : 0] C;
 wire OverflowFlag;
 
 // Unit Under Test Port Mapping
-<module_name> <module parameter initialization> <instance name> (
+ALU my_alu(
 	.A(A),
 	.B(B),	
 	.FuncCode(FuncCode),
