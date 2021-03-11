@@ -13,8 +13,9 @@ module check_time_and_coin(i_input_coin,i_select_item,clk,reset_n,wait_time,o_re
 	output reg  [`kNumCoins-1:0] o_return_coin;
 	output reg [31:0] wait_time;
 
-	// signal to return coinwhen time over, trigger return
+	// signal to return coin start / done
 	reg return_coin_signal;
+	reg return_done;
 	integer i;
 
 	// initiate values
@@ -22,6 +23,7 @@ module check_time_and_coin(i_input_coin,i_select_item,clk,reset_n,wait_time,o_re
 		o_return_coin <= `kNumCoins'b0;
 		wait_time <= 'd100;
 		return_coin_signal <= 0;
+		return_done <= 0;
 	end
 
 
@@ -30,7 +32,7 @@ module check_time_and_coin(i_input_coin,i_select_item,clk,reset_n,wait_time,o_re
 		wait_time <= 'd100;
 	end
 
-	// when return_signal == 1, return available coin 
+	// when return_signal == 1, start to return available coin 
 	always @(*) begin
 		if(return_coin_signal) begin
 			$strobe("current_total = %0d", current_total);
@@ -44,8 +46,7 @@ module check_time_and_coin(i_input_coin,i_select_item,clk,reset_n,wait_time,o_re
 			end
 		
 			if (current_total <= 0) begin
-				return_coin_signal <= 0;
-				o_return_coin <= `kNumCoins'b0;
+				return_done <= 1;
 			end
 		end
 		else begin
@@ -55,11 +56,12 @@ module check_time_and_coin(i_input_coin,i_select_item,clk,reset_n,wait_time,o_re
 	end
 
 	always @(posedge clk ) begin
-		if (!reset_n) begin
+		if (!(reset_n | return_done)) begin
 			// reset all states.
 			o_return_coin <= `kNumCoins'b0;
 			wait_time <= 'd100;
 			return_coin_signal <= 0;
+			return_done <= 0;
 		end
 		else begin
 			// update wait time. else statement to avoid underflow
