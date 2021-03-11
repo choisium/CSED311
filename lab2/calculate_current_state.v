@@ -3,7 +3,7 @@
 	
 
 module calculate_current_state(i_input_coin,i_select_item,item_price,coin_value,current_total,
-current_total_nxt,wait_time,o_return_coin,o_available_item,o_output_item);
+current_total_nxt,o_return_coin,o_available_item,o_output_item);
 
 
 	
@@ -12,7 +12,6 @@ current_total_nxt,wait_time,o_return_coin,o_available_item,o_output_item);
 	input [31:0] item_price [`kNumItems-1:0];
 	input [31:0] coin_value [`kNumCoins-1:0];	
 	input [`kTotalBits-1:0] current_total;
-	input [31:0] wait_time;
 	output reg [`kNumItems-1:0] o_available_item,o_output_item;
 	output reg  [`kTotalBits-1:0] current_total_nxt;
 	integer i;	
