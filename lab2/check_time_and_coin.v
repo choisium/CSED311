@@ -16,6 +16,7 @@ module check_time_and_coin(i_input_coin,i_select_item,clk,reset_n,wait_time,o_re
 	// signal to return coin start / done
 	reg return_coin_signal;
 	reg return_done;
+	reg [`kTotalBits-1:0] temp_current;
 	integer i;
 
 	// initiate values
@@ -35,28 +36,30 @@ module check_time_and_coin(i_input_coin,i_select_item,clk,reset_n,wait_time,o_re
 	// when return_signal == 1, start to return available coin 
 	always @(*) begin
 		if(return_coin_signal) begin
-			$strobe("current_total = %0d", current_total);
-			
-			// return available coin 
+
+			//return available coin
+			temp_current = current_total;
 			for (i = 0; i < `kNumCoins; i = i + 1) begin
-				if (coin_value[i] <= current_total)
+				if (coin_value[i] <= temp_current) begin
 					o_return_coin[i] = 1;
+					temp_current = temp_current - coin_value[i];
+				end
 				else
 					o_return_coin[i] = 0;
 			end
-		
+
+			// when return is done, reset
 			if (current_total <= 0) begin
-				return_done <= 1;
+				return_done = 1;
 			end
 		end
-		else begin
-			return_coin_signal <= 0;
-			o_return_coin <= `kNumCoins'b0;
-		end
+		else 
+			o_return_coin = `kNumCoins'b0;
+		
 	end
 
 	always @(posedge clk ) begin
-		if (!(reset_n | return_done)) begin
+		if (!(reset_n) | return_done) begin
 			// reset all states.
 			o_return_coin <= `kNumCoins'b0;
 			wait_time <= 'd100;
