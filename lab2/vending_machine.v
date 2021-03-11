@@ -77,11 +77,7 @@ module vending_machine (
 										.item_price(item_price),
 										.coin_value(coin_value),
 										.current_total(current_total),
-										.input_total(input_total),
-										.output_total(output_total),
-										.return_total(return_total),
 										.current_total_nxt(current_total_nxt),
-										.wait_time(wait_time),
 										.o_return_coin(o_return_coin),
 										.o_available_item(o_available_item),
 										.o_output_item(o_output_item));
