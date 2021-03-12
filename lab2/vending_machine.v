@@ -67,6 +67,7 @@ module vending_machine (
 		
   	check_time_and_coin check_time_and_coin_module(.i_input_coin(i_input_coin),
   									.i_select_item(i_select_item),
+									.o_output_item(o_output_item),
 									.clk(clk),
 									.reset_n(reset_n),
 									.wait_time(wait_time),

@@ -2,11 +2,12 @@
 
 	
 
-module check_time_and_coin(i_input_coin,i_select_item,clk,reset_n,wait_time,o_return_coin,coin_value,current_total,i_trigger_return);
+module check_time_and_coin(i_input_coin,i_select_item,o_output_item,clk,reset_n,wait_time,o_return_coin,coin_value,current_total,i_trigger_return);
 	input clk;
 	input reset_n;
 	input [`kNumCoins-1:0] i_input_coin;
 	input [`kNumItems-1:0]	i_select_item;
+	input [`kNumItems-1:0]	o_output_item;
 	input [`kTotalBits-1:0] current_total;
 	input [31:0] coin_value [`kNumCoins-1:0];
 	input i_trigger_return;	
@@ -28,8 +29,8 @@ module check_time_and_coin(i_input_coin,i_select_item,clk,reset_n,wait_time,o_re
 	end
 
 
-	// update coin return time when insert money, select item
-	always @(i_input_coin, i_select_item) begin
+	// update coin return time when insert money, item dispensed
+	always @(i_input_coin, o_output_item) begin
 		wait_time <= 'd100;
 	end
 
@@ -73,7 +74,8 @@ module check_time_and_coin(i_input_coin,i_select_item,clk,reset_n,wait_time,o_re
 			else
 				wait_time <= 0;
 
-			$strobe("wait_time = %0d", wait_time);
+			//$strobe("wait_time = %0d", wait_time);
+			
 			// return coin when wait_time over or trigger_return
 			if ((wait_time <= 0) || i_trigger_return)
 				return_coin_signal <= 1;
