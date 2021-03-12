@@ -50,7 +50,7 @@ module check_time_and_coin(i_input_coin,i_select_item,o_output_item,clk,reset_n,
 			end
 
 			// when return is done, reset
-			if (current_total <= 0) begin
+			if (current_total == 0) begin
 				return_done = 1;
 			end
 		end
@@ -77,7 +77,7 @@ module check_time_and_coin(i_input_coin,i_select_item,o_output_item,clk,reset_n,
 			//$strobe("wait_time = %0d", wait_time);
 			
 			// return coin when wait_time over or trigger_return
-			if ((wait_time <= 0) || i_trigger_return)
+			if ((wait_time == 0) || i_trigger_return)
 				return_coin_signal <= 1;
 		end
 	end
