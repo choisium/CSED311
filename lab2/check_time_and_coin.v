@@ -42,9 +42,11 @@ module check_time_and_coin(i_input_coin,i_select_item,o_output_item,clk,reset_n,
 			end
 
 			// when return is done, reset
-			if (current_total == 0) begin
+			if (temp_current == 0) begin
 				return_done = 1;
 			end
+			else
+				return_done = 0;
 		end
 		else 
 			o_return_coin = `kNumCoins'b0;
