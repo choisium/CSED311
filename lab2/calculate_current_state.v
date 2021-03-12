@@ -17,6 +17,8 @@ current_total_nxt,o_return_coin,o_available_item,o_output_item);
 	integer i;	
 
 	wire [`kTotalBits-1:0] inserted_coin, selected_item, return_coin;
+
+	// Calculate inserted coin value, selected item price and return coin
 	assign inserted_coin = i_input_coin[0] * coin_value[0]
 						+ i_input_coin[1] * coin_value[1]
 						+ i_input_coin[2] * coin_value[2];
@@ -30,8 +32,12 @@ current_total_nxt,o_return_coin,o_available_item,o_output_item);
 	
 	// Combinational logic for the next states
 	always @(*) begin
+		// when coin is returned, update current_total_nxt
+		if (return_coin != 0) begin
+			current_total_nxt = current_total - return_coin;
+		end
 		// when item is selected and it is available
-		if (selected_item !== 0 && selected_item <= current_total) begin
+		else if (selected_item != 0 && selected_item <= current_total) begin
 			current_total_nxt = current_total - selected_item;
 			o_output_item = i_select_item;
 		end
@@ -40,12 +46,6 @@ current_total_nxt,o_return_coin,o_available_item,o_output_item);
 			current_total_nxt = current_total + inserted_coin;
 			o_output_item = `kNumItems'b0;
 		end
-		
-		// when coin is returned, update current_total_nxt
-		if (return_coin !== 0) 
-			current_total_nxt = current_total - return_coin;
-		else
-			current_total_nxt = current_total_nxt;
 
 		// check available items using current_total_nxt
 		for (i = 0; i < `kNumItems; i = i + 1) begin
