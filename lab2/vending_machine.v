@@ -58,9 +58,10 @@ module vending_machine (
 
 	
 	// Variables. You may add more your own net variables.
-	wire [`kTotalBits-1:0] input_total, output_total, return_total;
-	wire [`kNumItems-1:0] o_available_item_async;
 	wire [31:0] wait_time;
+	wire [`kNumItems-1:0] o_available_item_async;
+	wire [`kNumItems-1:0] o_output_item_async;
+	wire [`kNumCoins-1:0] o_return_coin_async;
 
 
 	// This module interface, structure, and given a number of modules are not mandatory but recommended.
@@ -68,11 +69,11 @@ module vending_machine (
 		
   	check_time_and_coin check_time_and_coin_module(.i_input_coin(i_input_coin),
   									.i_select_item(i_select_item),
-									.o_output_item(o_output_item),
+									.o_output_item(o_output_item_async),
 									.clk(clk),
 									.reset_n(reset_n),
 									.wait_time(wait_time),
-									.o_return_coin(o_return_coin),
+									.o_return_coin(o_return_coin_async),
 									.coin_value(coin_value),
 									.current_total(current_total),
 									.i_trigger_return(i_trigger_return));
@@ -83,9 +84,9 @@ module vending_machine (
 										.coin_value(coin_value),
 										.current_total(current_total),
 										.current_total_nxt(current_total_nxt),
-										.o_return_coin(o_return_coin),
+										.o_return_coin(o_return_coin_async),
 										.o_available_item(o_available_item_async),
-										.o_output_item(o_output_item));
+										.o_output_item(o_output_item_async));
 	
   	change_state change_state_module(
 						.clk(clk),
@@ -96,9 +97,12 @@ module vending_machine (
   	d_flip_flop d_flip_flop_module(
 						.clk(clk),
 						.reset_n(reset_n),
-						.o_available_item_async(o_available_item_async),
 						.i_input_coin(i_input_coin),
+						.o_available_item_async(o_available_item_async),
+						.o_output_item_async(o_output_item_async),
+						.o_return_coin_async(o_return_coin_async),
+						.o_available_item(o_available_item),
 						.o_output_item(o_output_item),
-						.o_available_item(o_available_item));
+						.o_return_coin(o_return_coin));
 
 endmodule
