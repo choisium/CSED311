@@ -55,9 +55,9 @@ current_total_nxt,o_return_coin,o_available_item,o_output_item);
 				o_available_item[i] = 0;
 		end
 
-		// print available items
-		if (inserted_coin || o_output_item)
-			$strobe("o_available_item = %0b", o_available_item);
+		// // print available items
+		// if (inserted_coin || o_output_item)
+		// 	$strobe("o_available_item = %0b", o_available_item);
 	end
  
 	

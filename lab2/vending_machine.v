@@ -59,6 +59,7 @@ module vending_machine (
 	
 	// Variables. You may add more your own net variables.
 	wire [`kTotalBits-1:0] input_total, output_total, return_total;
+	wire [`kNumItems-1:0] o_available_item_async;
 	wire [31:0] wait_time;
 
 
@@ -83,7 +84,7 @@ module vending_machine (
 										.current_total(current_total),
 										.current_total_nxt(current_total_nxt),
 										.o_return_coin(o_return_coin),
-										.o_available_item(o_available_item),
+										.o_available_item(o_available_item_async),
 										.o_output_item(o_output_item));
 	
   	change_state change_state_module(
@@ -92,5 +93,12 @@ module vending_machine (
 						.current_total_nxt(current_total_nxt),
 						.current_total(current_total));
 
+  	d_flip_flop d_flip_flop_module(
+						.clk(clk),
+						.reset_n(reset_n),
+						.o_available_item_async(o_available_item_async),
+						.i_input_coin(i_input_coin),
+						.o_output_item(o_output_item),
+						.o_available_item(o_available_item));
 
 endmodule

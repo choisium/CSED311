@@ -17,6 +17,7 @@ module change_state(clk,reset_n,current_total_nxt,current_total);
 		else begin
 			// TODO: update all states.
 			current_total <= current_total_nxt;
+			// $strobe("current_total = %0d", current_total);
 		end
 	end
 endmodule 
