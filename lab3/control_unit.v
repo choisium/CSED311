@@ -101,10 +101,11 @@ always @(*) begin
 	    end
     endcase
 
-
+	// NOTE: This is for test! Before submit, delete this code!
     $display("opcode: %d", opcode);
     $display("alu_src: %d, reg_write: %d, mem_read: %d, mem_to_reg: %d, mem_write: %d, jp: %d, branch: %d, pc_to_reg: %d, rt_write: %d",
             alu_src, reg_write, mem_read, mem_to_reg, mem_write, jp, branch, pc_to_reg, rt_write);
+    // NOTE END
 end
 
 

@@ -37,8 +37,10 @@ module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 		writeM <= 0;
 		address <= pc;
 		temp_data <= `WORD_SIZE'bz;
+		// NOTE: This is for test! Before submit, delete this code!
 		$strobe("pc value: %d, pc nxt value: %d", pc, pc_nxt);
 		$strobe("readM: %d, writeM: %d, address: %d", readM, writeM, address);
+		// NOTE END
 	end
 
 	// read or write memory
