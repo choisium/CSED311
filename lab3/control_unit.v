@@ -1,6 +1,6 @@
 `include "opcodes.v" 	   
 
-module control_unit (instr, alu_src, reg_write, mem_read, mem_to_reg, mem_write, jp, branch, pc_to_reg, rt_write, zero_extended);
+module control_unit (instr, alu_src, reg_write, mem_read, mem_to_reg, mem_write, jp, branch, pc_to_reg, rt_write);
 input [`WORD_SIZE-1:0] instr;
 output reg alu_src;
 output reg reg_write;
@@ -11,7 +11,6 @@ output reg jp;
 output reg branch;
 output reg pc_to_reg;
 output reg rt_write;
-output reg zero_extended;
 
 wire [3:0] opcode;
 assign opcode = instr[15:12];
@@ -30,7 +29,6 @@ always @(*) begin
     branch = 0;
     pc_to_reg = 0;
     rt_write = 0;
-    zero_extended = 0;
     case (opcode)
         `ALU_OP, `JPR_OP, `JRL_OP: begin     // R-type Instructions
             case (func_code)
@@ -56,7 +54,6 @@ always @(*) begin
             alu_src = 1;
             reg_write = 1;
             rt_write = 1;
-            zero_extended = 1;
         end
         `LWD_OP: begin
             alu_src = 1;

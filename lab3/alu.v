@@ -21,7 +21,7 @@ module alu (alu_input_1, alu_input_2, alu_func_code, alu_output, zero);
 			`FUNC_TCP: alu_output = ~alu_input_1 + 1;
 			`FUNC_SHL: alu_output = {alu_input_1[14:0], 1'b0};
 			`FUNC_SHR: alu_output = {alu_input_1[15], alu_input_1[15:1]} ;
-			default: alu_output = 0; // should not happen
+			default: alu_output = 0; // not happen
 		endcase
 	end
 endmodule

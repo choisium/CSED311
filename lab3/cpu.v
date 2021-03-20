@@ -62,8 +62,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 		.jp(jp),
 		.branch(branch),
 		.pc_to_reg(pc_to_reg),
-		.rt_write(rt_write),
-		.zero_extended(zero_extended)
+		.rt_write(rt_write)
 	);
 	
 	alu_control_unit ALUControlUnit(
