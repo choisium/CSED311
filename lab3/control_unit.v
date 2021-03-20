@@ -35,19 +35,15 @@ always @(*) begin
         `ALU_OP, `JPR_OP, `JRL_OP: begin     // R-type Instructions
             case (func_code)
                 `INST_FUNC_JPR: begin        // JPR
-                    reg_write = 0;
-                    jp = 1;
-                    pc_to_reg = 0;
+                    jp = 2;
                 end
                 `INST_FUNC_JRL: begin        // JRL
-                    reg_write = 0;
-                    jp = 1;
-                    pc_to_reg = 0;
+                    reg_write = 1;
+                    jp = 2;
+                    pc_to_reg = 1;
                 end
                 default: begin               // ALU operations
                     reg_write = 1;
-                    jp = 0;
-                    pc_to_reg = 0;
                 end
             endcase
         end
@@ -84,6 +80,7 @@ always @(*) begin
             jp = 1;
         end
         `JAL_OP: begin
+            reg_write = 1;
             jp = 1;
             pc_to_reg = 1;
         end
