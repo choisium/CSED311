@@ -7,10 +7,10 @@ output reg reg_write;
 output reg mem_read;
 output reg mem_to_reg;
 output reg mem_write;
-output reg jp;
+output reg [1:0] jp;
 output reg branch;
 output reg pc_to_reg;
-output reg rt_write;
+output reg [1:0] rt_write;
 
 wire [3:0] opcode;
 assign opcode = instr[15:12];
@@ -36,7 +36,7 @@ always @(*) begin
                     jp = 2;
                 end
                 `INST_FUNC_JRL: begin        // JRL
-                    reg_write = 1;
+                    reg_write = 2;
                     jp = 2;
                     pc_to_reg = 1;
                 end
@@ -45,12 +45,7 @@ always @(*) begin
                 end
             endcase
         end
-        `ADI_OP, `LHI_OP: begin
-            alu_src = 1;
-            reg_write = 1;
-            rt_write = 1;
-        end
-        `ORI_OP: begin
+        `ADI_OP, `ORI_OP, `LHI_OP: begin
             alu_src = 1;
             reg_write = 1;
             rt_write = 1;
@@ -77,7 +72,7 @@ always @(*) begin
             jp = 1;
         end
         `JAL_OP: begin
-            reg_write = 1;
+            reg_write = 2;
             jp = 1;
             pc_to_reg = 1;
         end
@@ -96,6 +91,7 @@ always @(*) begin
     endcase
 
 	// NOTE: This is for test! Before submit, delete this code!
+    $display("---CONTROL UNIT---");
     $display("opcode: %d", opcode);
     $display("alu_src: %d, reg_write: %d, mem_read: %d, mem_to_reg: %d, mem_write: %d, jp: %d, branch: %d, pc_to_reg: %d, rt_write: %d",
             alu_src, reg_write, mem_read, mem_to_reg, mem_write, jp, branch, pc_to_reg, rt_write);
