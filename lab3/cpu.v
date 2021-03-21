@@ -168,7 +168,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 		.in3(alu_result),		
 		.in4(alu_result),
 		.sel(jp),
-		.out(MUX_jp_out)
+		.out(pc_nxt)
 	);	
 
 
