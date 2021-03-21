@@ -23,9 +23,9 @@ module alu (alu_input_1, alu_input_2, alu_func_code, alu_output, zero);
 			`FUNC_SHR: alu_output = {alu_input_1[15], alu_input_1[15:1]};
 			`FUNC_IP1: alu_output = alu_input_1;
 			`FUNC_IP2: alu_output = alu_input_2;
-			`FUNC_BNE: alu_output = ~(alu_input_1 - alu_input_2);
-			`FUNC_BGZ: alu_output = alu_input_1[15] | (alu_input_1 == 16'b0);
-			`FUNC_BLZ: alu_output = ~alu_input_1[15];
+			`FUNC_BNE: alu_output = ~(alu_input_1 - alu_input_2); // zero if not equal
+			`FUNC_BGZ: alu_output = alu_input_1[15] | (alu_input_1 == 16'b0); // zero if alu_input > 0
+			`FUNC_BLZ: alu_output = ~alu_input_1[15]; // zero if alu_input_1 < 0
 			default: alu_output = 0; // not happen
 		endcase
 
