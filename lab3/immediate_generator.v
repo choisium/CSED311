@@ -11,16 +11,16 @@ assign imm = instr[7:0];
 
 always @(*) begin
     case (opcode)
-        `ADI_OP: assign immediate = {{8{imm[7]}}, imm[7:0]};
-        `ORI_OP: assign immediate = {8'b0, imm[7:0]};
-        `LHI_OP: assign immediate = {imm[7:0], 8'b0};
-        `LWD_OP: assign immediate = {{8{imm[7]}}, imm[7:0]};
-        `SWD_OP: assign immediate = {{8{imm[7]}}, imm[7:0]};
-        `BNE_OP: assign immediate = {{8{imm[7]}}, imm[7:0]};
-        `BEQ_OP: assign immediate = {{8{imm[7]}}, imm[7:0]};
-        `BGZ_OP: assign immediate = {{8{imm[7]}}, imm[7:0]};
-        `BLZ_OP: assign immediate = {{8{imm[7]}}, imm[7:0]};
-        default: assign immediate = 16'b0; // not happen
+        `ADI_OP: immediate <= {{8{imm[7]}}, imm[7:0]};
+        `ORI_OP: immediate <= {8'b0, imm[7:0]};
+        `LHI_OP: immediate <= {imm[7:0], 8'b0};
+        `LWD_OP: immediate <= {{8{imm[7]}}, imm[7:0]};
+        `SWD_OP: immediate <= {{8{imm[7]}}, imm[7:0]};
+        `BNE_OP: immediate <= {{8{imm[7]}}, imm[7:0]};
+        `BEQ_OP: immediate <= {{8{imm[7]}}, imm[7:0]};
+        `BGZ_OP: immediate <= {{8{imm[7]}}, imm[7:0]};
+        `BLZ_OP: immediate <= {{8{imm[7]}}, imm[7:0]};
+        default: immediate <= 16'b0; // not happen
     endcase
 end
 

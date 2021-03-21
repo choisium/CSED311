@@ -41,8 +41,8 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	wire [`WORD_SIZE-1:0] alu_result, adder_result;
 
 	// reg and wire for constant literals
-	reg [1:0] x2;
-	reg [3:0] adder_func_code;
+	wire [1:0] x2;
+	wire [3:0] adder_func_code;
 	wire branch_high;
 
 	assign x2 = 2'b10;

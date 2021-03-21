@@ -17,15 +17,15 @@ module register_file (read_out1, read_out2, read1, read2, write_reg, write_data,
         RF[3] = 16'b0;
     end
     
-    assign read_out1 = RF[read1];
-    assign read_out2 = RF[read2];
+    // assign read_out1 = RF[read1];
+    // assign read_out2 = RF[read2];
 
     always @(posedge clk) begin
         // write back if reg_write is high
         if (reg_write) RF[write_reg] <= write_data;
         else begin
-            read_out1 <= read_out1;
-            read_out2 <= read_out2;
+            read_out1 <= RF[read1];
+            read_out2 <= RF[read2];
         end
 
         // NOTE: This is for test! Before submit, delete this code!
