@@ -8,7 +8,7 @@ module register_file (read_out1, read_out2, read1, read2, write_reg, write_data,
     input reg_write;
     input clk;
 
-    reg [3:0] RF [15:0]; // 4 registers each 16 bits long
+    reg [15:0] RF [3:0]; // 4 registers each 16 bits long
     
     initial begin
         RF[0] = 16'b0;

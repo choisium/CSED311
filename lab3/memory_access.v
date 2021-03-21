@@ -21,7 +21,7 @@ module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 		pc_nxt = 0;
 	end
 
-	reg temp_data;
+	reg [`WORD_SIZE-1:0] temp_data;
 
 	assign data = (readM || inputReady)? `WORD_SIZE'bz: temp_data;
 
