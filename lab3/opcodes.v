@@ -24,6 +24,12 @@
 `define	FUNC_TCP	4'b0101
 `define	FUNC_SHL	4'b0110
 `define	FUNC_SHR	4'b0111
+`define FUNC_IP1	4'b1000
+`define FUNC_IP2	4'b1001
+`define FUNC_BNE	4'b1010
+`define FUNC_BGZ	4'b1011
+`define FUNC_BLZ	4'b1100
+
 
 // ALU instruction function codes
 `define INST_FUNC_ADD 6'd0
