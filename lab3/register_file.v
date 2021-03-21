@@ -20,7 +20,7 @@ module register_file (read_out1, read_out2, read1, read2, write_reg, write_data,
     assign read_out1 = RF[read1];
     assign read_out2 = RF[read2];
 
-    always @(posedge clk) begin
+    always @(*) begin
         // write back if reg_write is high
         if (reg_write) RF[write_reg] <= write_data;
 

@@ -23,7 +23,13 @@ module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 
 	reg [`WORD_SIZE-1:0] temp_data;
 
-	assign data = (readM || inputReady)? `WORD_SIZE'bz: temp_data;
+	// assign data = (readM || inputReady) ? `WORD_SIZE'bz : temp_data;
+	assign data = (writeM || ackOutput)? mem_data : `WORD_SIZE'bz;
+
+	always @(data, temp_data, mem_data) begin
+		$display("---MEMORY DISPLAY---");
+		$display("data: %d, temp_data: %d, mem_data: %d", data, temp_data, mem_data);
+	end
 
 	// update pc
 	always @(posedge clk) begin
@@ -36,9 +42,9 @@ module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 		readM <= 1;
 		writeM <= 0;
 		address <= pc;
-		temp_data <= `WORD_SIZE'bz;
+
 		// NOTE: This is for test! Before submit, delete this code!
-		$strobe("---MEMORY ACCESS---");
+		$strobe("---MEMORY ACCESS POSEDGE---");
 		$strobe("pc value: %d, pc nxt value: %d", pc, pc_nxt);
 		$strobe("readM: %d, writeM: %d, address: %d", readM, writeM, address);
 		// NOTE END
@@ -49,7 +55,13 @@ module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 		readM <= mem_read;
 		writeM <= mem_write;
 		address <= mem_address;
-		temp_data <= mem_read ? `WORD_SIZE'bz : mem_data;
+		temp_data <= mem_data;
+
+		// NOTE: This is for test! Before submit, delete this code!
+		$strobe("---MEMORY ACCESS NEGEDGE---");
+		$strobe("readM: %d, writeM: %d, address: %d, data: %d", readM, writeM, address, data);
+		$strobe("mem_read: %d, mem_write: %d, mem_address: %d, mem_data: %d", mem_read, mem_write, mem_address, mem_data);
+		// NOTE END
 	end
 
 endmodule

@@ -49,6 +49,8 @@ module tb_cpu();
 	  			inputReady = 0;
       			loadedData = `WORD_SIZE'bz;	 
 	  		end else if (writeM == 1) begin
+				$display("---TESTBENCH WRITE---");
+				$display("writeM: %d, ackOutput: %d, address: %d, data: %d", writeM, ackOutput, address, data);
 				memory[address] = data;
 				#`WRITE_DELAY;
 				ackOutput = 1;
@@ -111,7 +113,8 @@ module tb_cpu();
  	always @(posedge clk) begin
 		if (!reset_n) num_cycle = 0;
 		else num_cycle = num_cycle + 1;
-		if (num_cycle > 45) begin
+		if (num_cycle > 3) begin
+		// if (num_cycle > 45) begin
 			$display("Passed = %0d, Failed = %0d", Passed, Failed);	
 			$finish();
 		end
@@ -140,6 +143,8 @@ module tb_cpu();
   
   always @(posedge clk) begin
 	 #(`PERIOD1)
+	 $display("---TESTBENCH---");
+	 $display("num_cycle: %d", num_cycle);	
      case (num_cycle)
         3: Test(num_cycle, 32, 10);	 
         7: Test(num_cycle, 30, 5);		 
