@@ -22,7 +22,7 @@ module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 
 	initial begin
 		pc = 0;
-		pc_nxt = 1;
+		pc_nxt = 0;
 		instruction_fetch_sig = 0;
 		memory_access_sig = 0;
 	end
@@ -63,7 +63,7 @@ module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 		if (!reset_n) begin
 			// reset all states.
 			pc <= 0;
-			pc_nxt <= 1;
+			pc_nxt <= 0;
 		end
 		else begin
 			pc_nxt <= pc_update + 1;
@@ -76,7 +76,7 @@ module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 		// pc <= pc_nxt;
 		readM <= 1;
 		writeM <= 0;
-		address <= pc_update - 1;
+		address <= pc_update;
 		temp_data <= `WORD_SIZE'bz;
 		
 		instruction_fetch_sig <= 1;
