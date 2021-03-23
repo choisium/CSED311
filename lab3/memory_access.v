@@ -1,11 +1,14 @@
 `include "opcodes.v" 	   
 
 module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
-					  readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
+					  readM, writeM, address, data, ackOutput, inputReady, pc_update, 
+					  instruction_fetch_sig, memory_access_sig,
+					  reset_n, clk);
 	output reg [`WORD_SIZE-1: 0] pc, pc_nxt;
 	output reg readM;
 	output reg writeM;
 	output reg [`WORD_SIZE-1:0] address;
+	output reg instruction_fetch_sig, memory_access_sig;
 	inout [`WORD_SIZE-1:0] data;
 	input mem_read;
 	input mem_write;
@@ -13,12 +16,15 @@ module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 	input [`WORD_SIZE-1:0] mem_data;
 	input ackOutput;
 	input inputReady;
+	input [`WORD_SIZE-1: 0] pc_update;
 	input reset_n;
 	input clk;
 
 	initial begin
 		pc = 0;
-		pc_nxt = 0;
+		pc_nxt = 1;
+		instruction_fetch_sig = 0;
+		memory_access_sig = 0;
 	end
 
 	reg [`WORD_SIZE-1:0] temp_data;
@@ -54,21 +60,32 @@ module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 
 	// update pc
 	always @(posedge clk) begin
-		pc_nxt <= pc_nxt + 1;
+		if (!reset_n) begin
+			// reset all states.
+			pc <= 0;
+			pc_nxt <= 1;
+		end
+		else begin
+			pc_nxt <= pc_update + 1;
+			pc <= pc_update;
+		end
 	end
 
 	// instruction fetch
 	always @(posedge clk) begin
-		pc <= pc_nxt;
+		// pc <= pc_nxt;
 		readM <= 1;
 		writeM <= 0;
-		address <= pc;
+		address <= pc_update - 1;
 		temp_data <= `WORD_SIZE'bz;
-
+		
+		instruction_fetch_sig <= 1;
+		memory_access_sig <= 0;
 		// NOTE: This is for test! Before submit, delete this code!
-		$display("---MEMORY ACCESS POSEDGE---");
-		$display("pc value: %d, pc nxt value: %d", pc, pc_nxt);
-		$display("readM: %d, writeM: %d, address: %d", readM, writeM, address);
+		$strobe("---MEMORY ACCESS POSEDGE---");
+		$strobe("pc value: %d, pc nxt value: %d, pc update value: %d", pc, pc_nxt, pc_update);
+		$strobe("readM: %d, writeM: %d, address: %d", readM, writeM, address);
+		$strobe("instruction_fetch_sig: %d, memory_access_sig: %d", instruction_fetch_sig, memory_access_sig);
 		// NOTE END
 	end
 
@@ -79,10 +96,13 @@ module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 		address <= mem_address;
 		temp_data <= mem_write? mem_data: `WORD_SIZE'bz;
 
+		instruction_fetch_sig <= 0;
+		memory_access_sig <= 1;
 		// NOTE: This is for test! Before submit, delete this code!
-		$display("---MEMORY ACCESS NEGEDGE---");
-		$display("mem_read: %d, mem_write: %d, mem_address: %d, mem_data", mem_read, mem_write, mem_address, mem_data);
-		$display("readM: %d, writeM: %d, address: %d, data: %d, temp_data: %d", readM, writeM, address, data, temp_data);
+		$strobe("---MEMORY ACCESS NEGEDGE---");
+		$strobe("mem_read: %d, mem_write: %d, mem_address: %d, mem_data", mem_read, mem_write, mem_address, mem_data);
+		$strobe("readM: %d, writeM: %d, address: %d, data: %d, temp_data: %d", readM, writeM, address, data, temp_data);
+		$strobe("instruction_fetch_sig: %d, memory_access_sig: %d", instruction_fetch_sig, memory_access_sig);
 		// NOTE END
 	end
 
