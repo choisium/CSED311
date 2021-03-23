@@ -24,7 +24,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	// wire for memory_access
 	wire [`WORD_SIZE-1:0] mem_address;	// memory size is 256
 	wire [`WORD_SIZE-1:0] mem_data;
-	wire instruction_fetch_sig, memory_access_sig;
+	wire instrFetch, memAccess;
 
 	// wire for register_file
 	wire [`WORD_SIZE-1:0] RF_read_out1, RF_read_out2;
@@ -41,25 +41,16 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	wire zero;
 	wire [`WORD_SIZE-1:0] alu_result, adder_result;
 
-	// reg and wire for constant literals
-	wire [1:0] x2;
-	wire [3:0] adder_func_code;
-	wire branch_high;
-
-	assign x2 = 2'b10;
-	assign adder_func_code = `FUNC_ADD;
-	assign branch_high = branch & zero;
-
 	// get data from memory
 	always @(*) begin
 		// instruction fetch
-		if (readM && inputReady && instruction_fetch_sig)
+		if (readM && inputReady && instrFetch)
 			stable_data = data;
 		else
 			stable_data = stable_data;
 		
 		// memory data fetch 
- 		if (readM && inputReady && memory_access_sig)
+ 		if (readM && inputReady && memAccess)
 			memory_data = data;
 		else
 			memory_data = memory_data;
@@ -67,14 +58,13 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 		// NOTE: This is for test! Before submit, delete this code!
 		$display("---CPU---");
 		$display("stable_data: %h, memory_data: %h", stable_data, memory_data);
-		$display("inputReady: %d, instruction_fetch_sig: %d", inputReady, instruction_fetch_sig);
 		// NOTE END
 	end
 
 	
 	always @(*) begin
 		$display("---CPU BRANCH---");
-		$display("pc_nxt: %d, adder_result: %d, jp: %d, branch: %d, branch_high: %d, zero: %d", pc_nxt, adder_result, jp, branch, branch_high, zero);
+		$display("pc_nxt: %d, adder_result: %d, jp: %d, branch: %d, branch_high: %d, zero: %d", pc_nxt, adder_result, jp, branch, branch & zero, zero);
 		$display("MUX_branch_high_out: %d, MUX_jp_out: %d", MUX_branch_high_out, MUX_jp_out);
 	end
 
@@ -92,8 +82,8 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 		.ackOutput(ackOutput),
 		.inputReady(inputReady),
 		.pc_update(MUX_jp_out),
-		.instruction_fetch_sig(instruction_fetch_sig),
-		.memory_access_sig(memory_access_sig),
+		.instrFetch(instrFetch),
+		.memAccess(memAccess),
 		.reset_n(reset_n),
 		.clk(clk)
 	);
@@ -130,8 +120,8 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	mux4to1 #(.DATA_WIDTH(2)) MUX_rt_write(
 		.in1(stable_data[7:6]),
 		.in2(stable_data[9:8]),
-		.in3(x2),
-		.in4(x2),
+		.in3(2'b10),
+		.in4(2'b10),
 		.sel(rt_write),
 		.out(MUX_rt_write_out)
 	);
@@ -173,7 +163,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	alu Adder(
 		.alu_input_1(pc_nxt),
 		.alu_input_2(immediate),
-		.alu_func_code(adder_func_code),
+		.alu_func_code(`FUNC_ADD),
 		.alu_output(adder_result),
 		.zero()
 	);
@@ -181,7 +171,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	mux2to1 MUX_branch_high(
 		.in1(pc_nxt),
 		.in2(adder_result),
-		.sel(branch_high),
+		.sel(branch & zero),
 		.out(MUX_branch_high_out)
 	);
 	
