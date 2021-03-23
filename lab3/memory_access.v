@@ -23,7 +23,7 @@ module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 
 	reg [`WORD_SIZE-1:0] temp_data;
 
-	assign data = (writeM || ackOutput) ? temp_data: `WORD_SIZE'bz;
+	assign data = temp_data;
 
 	// NOTE: This is for test! Before submit, delete this code!
 	always @(*) begin
@@ -34,7 +34,7 @@ module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 
 	// update writeM to 0 after writing is done
 	always @(ackOutput) begin
-		if (ackOutput == 0) begin
+		if (ackOutput == 1) begin
 			writeM = 0;
 		end
 		else begin
