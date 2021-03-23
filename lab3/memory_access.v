@@ -77,7 +77,7 @@ module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 		readM <= mem_read;
 		writeM <= mem_write;
 		address <= mem_address;
-		temp_data <= mem_write? mem_data: `WORD_SIZE'bz;;
+		temp_data <= mem_write? mem_data: `WORD_SIZE'bz;
 
 		// NOTE: This is for test! Before submit, delete this code!
 		$display("---MEMORY ACCESS NEGEDGE---");
