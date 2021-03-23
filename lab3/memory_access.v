@@ -23,7 +23,34 @@ module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 
 	reg [`WORD_SIZE-1:0] temp_data;
 
-	assign data = (readM || inputReady)? `WORD_SIZE'bz: temp_data;
+	assign data = (writeM || ackOutput) ? temp_data: `WORD_SIZE'bz;
+
+	// NOTE: This is for test! Before submit, delete this code!
+	always @(*) begin
+		$display("---MEMORY ACCESS DISPLAY---");
+		$display("readM: %d, inputReady: %d, writeM: %d, ackOutput: %d, address: %d, data: %h, temp_data: %d", readM, inputReady, writeM, ackOutput, address, data, temp_data);
+	end
+	// NOTE END
+
+	// update writeM to 0 after writing is done
+	always @(ackOutput) begin
+		if (ackOutput == 0) begin
+			writeM = 0;
+		end
+		else begin
+			writeM = writeM;
+		end
+	end
+
+	// update readM to 0 after reading is done
+	always @(inputReady) begin
+		if (inputReady == 1) begin
+			readM = 0;
+		end
+		else begin
+			readM = readM;
+		end
+	end
 
 	// update pc
 	always @(posedge clk) begin
@@ -37,10 +64,11 @@ module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 		writeM <= 0;
 		address <= pc;
 		temp_data <= `WORD_SIZE'bz;
+
 		// NOTE: This is for test! Before submit, delete this code!
-		$strobe("---MEMORY ACCESS---");
-		$strobe("pc value: %d, pc nxt value: %d", pc, pc_nxt);
-		$strobe("readM: %d, writeM: %d, address: %d", readM, writeM, address);
+		$display("---MEMORY ACCESS POSEDGE---");
+		$display("pc value: %d, pc nxt value: %d", pc, pc_nxt);
+		$display("readM: %d, writeM: %d, address: %d", readM, writeM, address);
 		// NOTE END
 	end
 
@@ -49,7 +77,13 @@ module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 		readM <= mem_read;
 		writeM <= mem_write;
 		address <= mem_address;
-		temp_data <= mem_read ? `WORD_SIZE'bz : mem_data;
+		temp_data <= mem_write? mem_data: `WORD_SIZE'bz;;
+
+		// NOTE: This is for test! Before submit, delete this code!
+		$display("---MEMORY ACCESS NEGEDGE---");
+		$display("mem_read: %d, mem_write: %d, mem_address: %d, mem_data", mem_read, mem_write, mem_address, mem_data);
+		$display("readM: %d, writeM: %d, address: %d, data: %d, temp_data: %d", readM, writeM, address, data, temp_data);
+		// NOTE END
 	end
 
 endmodule
