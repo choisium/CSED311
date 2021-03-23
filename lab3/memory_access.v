@@ -73,7 +73,6 @@ module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 
 	// instruction fetch
 	always @(posedge clk) begin
-		// pc <= pc_nxt;
 		readM <= 1;
 		writeM <= 0;
 		address <= pc_update;
