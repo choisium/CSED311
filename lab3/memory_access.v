@@ -2,7 +2,7 @@
 
 module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 					  readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
-	output reg[5:0] pc, pc_nxt;
+	output reg [`WORD_SIZE-1: 0] pc, pc_nxt;
 	output reg readM;
 	output reg writeM;
 	output reg [`WORD_SIZE-1:0] address;
@@ -21,7 +21,7 @@ module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 		pc_nxt = 0;
 	end
 
-	reg temp_data;
+	reg [`WORD_SIZE-1:0] temp_data;
 
 	assign data = (readM || inputReady)? `WORD_SIZE'bz: temp_data;
 
@@ -38,6 +38,7 @@ module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 		address <= pc;
 		temp_data <= `WORD_SIZE'bz;
 		// NOTE: This is for test! Before submit, delete this code!
+		$strobe("---MEMORY ACCESS---");
 		$strobe("pc value: %d, pc nxt value: %d", pc, pc_nxt);
 		$strobe("readM: %d, writeM: %d, address: %d", readM, writeM, address);
 		// NOTE END

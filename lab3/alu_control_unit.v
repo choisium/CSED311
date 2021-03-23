@@ -13,13 +13,38 @@ assign func_code = instr[5:0];
 always @(*) begin
     case (opcode)
         `ALU_OP: begin
-            alu_func_code = func_code;
+            case(func_code)
+                `INST_FUNC_JPR: alu_func_code = `FUNC_IP1; // pc <- rs
+                `INST_FUNC_JRL: alu_func_code = `FUNC_IP1; // pc <- rs
+                default: alu_func_code = func_code[3:0];
+            endcase
         end
         `ADI_OP: begin
             alu_func_code = `FUNC_ADD;
         end
         `ORI_OP: begin
             alu_func_code = `FUNC_ORR;
+        end
+        `LHI_OP: begin // immediate : alu_input_2
+            alu_func_code = `FUNC_IP2;
+        end
+        `LWD_OP: begin
+            alu_func_code = `FUNC_ADD;
+        end
+        `SWD_OP: begin
+            alu_func_code = `FUNC_ADD;
+        end
+        `BNE_OP: begin // Zero if (input1 != input2)
+            alu_func_code = `FUNC_BNE;
+        end
+        `BEQ_OP: begin // Zero if (input1 == input2)
+            alu_func_code = `FUNC_SUB;
+        end
+        `BGZ_OP: begin // Zero if (input1 != 0 and positive)
+            alu_func_code = `FUNC_BGZ;
+        end
+        `BLZ_OP: begin // Zero if (input1 is negative)
+            alu_func_code = `FUNC_BLZ;
         end
         // NOTE: Add alu_func_code below as you want!
 
@@ -28,7 +53,7 @@ always @(*) begin
 	    end
     endcase
 
-
+    $display("---ALU CONTROL---");
     $display("func_code: %d", alu_func_code);
 end
 
