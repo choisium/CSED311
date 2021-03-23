@@ -3,8 +3,8 @@
 `define	NumBits	16
 
 module alu (alu_input_1, alu_input_2, alu_func_code, alu_output, zero);
-	input [`NumBits-1:0] alu_input_1;
-	input [`NumBits-1:0] alu_input_2;
+	input signed [`NumBits-1:0] alu_input_1;
+	input signed [`NumBits-1:0] alu_input_2;
 	input [3:0] alu_func_code;
 	output reg [`NumBits-1:0] alu_output;
 	output zero;
@@ -23,9 +23,9 @@ module alu (alu_input_1, alu_input_2, alu_func_code, alu_output, zero);
 			`FUNC_SHR: alu_output = {alu_input_1[15], alu_input_1[15:1]};
 			`FUNC_IP1: alu_output = alu_input_1;
 			`FUNC_IP2: alu_output = alu_input_2;
-			`FUNC_BNE: alu_output = ~(alu_input_1 - alu_input_2); // zero if not equal
-			`FUNC_BGZ: alu_output = alu_input_1[15] | (alu_input_1 == 16'b0); // zero if alu_input > 0
-			`FUNC_BLZ: alu_output = ~alu_input_1[15]; // zero if alu_input_1 < 0
+			`FUNC_BNE: alu_output = (alu_input_1 != alu_input_2)? 0 : 1; // zero if not equal
+			`FUNC_BGZ: alu_output = (alu_input_1 > 0)? 0 : 1; // zero if alu_input_1 > 0
+			`FUNC_BLZ: alu_output = (alu_input_1 < 0)? 0 : 1; // zero if alu_input_1 < 0
 			default: alu_output = 0; // not happen
 		endcase
 
