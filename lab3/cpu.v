@@ -61,6 +61,12 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 		// NOTE END
 	end
 
+	always @(*) begin
+		$display("---CPU BRANCH---");
+		$display("pc_nxt: %d, adder_result: %d, jp: %d, branch: %d, branch_high: %d, zero: %d", pc_nxt, adder_result, jp, branch, branch_high, zero);
+		$display("MUX_branch_high_out: %d, MUX_jp_out: %d", MUX_branch_high_out, MUX_jp_out);
+	end
+
 	memory_access MemoryAccess(
 		.pc(pc),
 		.pc_nxt(pc_nxt),

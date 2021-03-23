@@ -111,7 +111,8 @@ module tb_cpu();
  	always @(posedge clk) begin
 		if (!reset_n) num_cycle = 0;
 		else num_cycle = num_cycle + 1;
-		if (num_cycle > 45) begin
+		// if (num_cycle > 45) begin
+		if (num_cycle > 8) begin
 			$display("Passed = %0d, Failed = %0d", Passed, Failed);	
 			$finish();
 		end
@@ -137,9 +138,15 @@ module tb_cpu();
 			end
 		end
 	endtask
-  
+  integer i;
   always @(posedge clk) begin
 	 #(`PERIOD1)
+	 $display("---TESTBENCH---");
+	 $display("num_cycle: %d", num_cycle);
+	 for (i = 30; i < 36; i = i + 1) begin
+		 $display("%0d: %d", i, memory[i]);
+	 	// $display("30: %d, 31: %d, 32: %d, 33: %d, 34: %d, 35:%d", memroy[30], memroy[31],memroy[32],memroy[33],memroy[34],memroy[35]);
+	 end
      case (num_cycle)
         3: Test(num_cycle, 32, 10);	 
         7: Test(num_cycle, 30, 5);		 
