@@ -12,7 +12,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 
 	// state PC
 	wire [`WORD_SIZE-1: 0] pc, pc_nxt;
-	wire [`WORD_SIZE-1: 0] stable_data;
+	reg [`WORD_SIZE-1: 0] stable_data;
 
 	// wire for control_unit
 	wire alu_src, reg_write, mem_read, mem_to_reg, mem_write, branch, pc_to_reg, zero_extended;
@@ -49,14 +49,17 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	assign adder_func_code = `FUNC_ADD;
 	assign branch_high = branch & zero;
 
-	assign stable_data = (readM && inputReady) ? data: stable_data;
-
-	// NOTE: This is for test! Before submit, delete this code!
+	// get instruction from memory data
 	always @(*) begin
-		// $strobe("data: %h", data);
-		$strobe("stable_data: %h", stable_data);
+		if (readM && inputReady)
+			stable_data = data;
+		else
+			stable_data = stable_data;
+		// NOTE: This is for test! Before submit, delete this code!
+		$display("---CPU---");
+		$display("stable_data: %h", stable_data);
+		// NOTE END
 	end
-	// NOTE END
 
 	memory_access MemoryAccess(
 		.pc(pc),
