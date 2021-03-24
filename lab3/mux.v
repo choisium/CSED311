@@ -7,8 +7,8 @@ module mux2to1 #(parameter DATA_WIDTH = 16) (in1, in2, sel, out);
     
     always @(*) begin
         case(sel)
-            0: out = in1;
-            default: out = in2;
+            1: out = in2;
+            default: out = in1;
         endcase
     end
 endmodule
@@ -20,10 +20,10 @@ module mux4to1 #(parameter DATA_WIDTH = 16) (in1, in2, in3, in4, sel, out);
     
     always @(*) begin
         case(sel)
-            0: out = in1;
             1: out = in2;
             2: out = in3;
-            default: out = in4;
+            3: out = in4;
+            default: out = in1;
         endcase
     end
 endmodule

@@ -23,7 +23,7 @@ module register_file (read_out1, read_out2, read1, read2, write_reg, write_data,
     always @(posedge clk) begin
         // write back if reg_write is high
         if (reg_write) RF[write_reg] <= write_data;
-	else RF[write_reg] <= RF[write_reg];
+        else RF[write_reg] <= RF[write_reg];
 	    
         // NOTE: This is for test! Before submit, delete this code!
         $strobe("---REGISTER FILE---");
