@@ -54,18 +54,6 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 			memory_data = data;
 		else
 			memory_data = memory_data;
-	
-		// NOTE: This is for test! Before submit, delete this code!
-		$display("---CPU---");
-		$display("instruction: %h, memory_data: %h", instruction, memory_data);
-		// NOTE END
-	end
-
-	
-	always @(*) begin
-		$display("---CPU BRANCH---");
-		$display("pc_nxt: %d, adder_result: %d, jp: %d, branch: %d, branch_high: %d, zero: %d", pc_nxt, adder_result, jp, branch, branch & zero, zero);
-		$display("MUX_branch_high_out: %d, MUX_jp_out: %d", MUX_branch_high_out, MUX_jp_out);
 	end
 
 	memory_access MemoryAccess(

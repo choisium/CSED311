@@ -24,12 +24,5 @@ module register_file (read_out1, read_out2, read1, read2, write_reg, write_data,
         // write back if reg_write is high
         if (reg_write) RF[write_reg] <= write_data;
         else RF[write_reg] <= RF[write_reg];
-	    
-        // NOTE: This is for test! Before submit, delete this code!
-        $strobe("---REGISTER FILE---");
-		$strobe("read1: %d, read2: %d, write_reg: %d, write_data:%d, reg_write: %d", read1, read2, write_reg, write_data, reg_write);
-        $strobe("$0: %d, $1: %d, $2: %d, $3: %d", RF[0], RF[1], RF[2], RF[3]);
-        $strobe("read_out1: %d, read_out2: %d", read_out1, read_out2);
-        // NOTE END
     end
 endmodule

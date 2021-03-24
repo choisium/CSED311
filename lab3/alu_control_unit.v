@@ -46,15 +46,11 @@ always @(*) begin
         `BLZ_OP: begin // Zero if (input1 is negative)
             alu_func_code = `FUNC_BLZ;
         end
-        // NOTE: Add alu_func_code below as you want!
 
    	    default: begin      // Don't use ALU
             alu_func_code = 4'd15;
 	    end
     endcase
-
-    $display("---ALU CONTROL---");
-    $display("func_code: %d", alu_func_code);
 end
 
 

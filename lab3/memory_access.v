@@ -31,13 +31,6 @@ module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 
 	assign data = temp_data;
 
-	// NOTE: This is for test! Before submit, delete this code!
-	always @(*) begin
-		$display("---MEMORY ACCESS DISPLAY---");
-		$display("readM: %d, inputReady: %d, writeM: %d, ackOutput: %d, address: %d, data: %h, temp_data: %d", readM, inputReady, writeM, ackOutput, address, data, temp_data);
-	end
-	// NOTE END
-
 	// update writeM to 0 after writing is done
 	always @(ackOutput) begin
 		if (ackOutput == 1) begin
@@ -80,12 +73,6 @@ module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 		
 		instrFetch <= 1;
 		memAccess <= 0;
-		// NOTE: This is for test! Before submit, delete this code!
-		$strobe("---MEMORY ACCESS POSEDGE---");
-		$strobe("pc value: %d, pc nxt value: %d, pc update value: %d", pc, pc_nxt, pc_update);
-		$strobe("readM: %d, writeM: %d, address: %d", readM, writeM, address);
-		$strobe("instrFetch: %d, memAccess: %d", instrFetch, memAccess);
-		// NOTE END
 	end
 
 	// read or write memory
@@ -97,12 +84,6 @@ module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 
 		instrFetch <= 0;
 		memAccess <= 1;
-		// NOTE: This is for test! Before submit, delete this code!
-		$strobe("---MEMORY ACCESS NEGEDGE---");
-		$strobe("mem_read: %d, mem_write: %d, mem_address: %d, mem_data", mem_read, mem_write, mem_address, mem_data);
-		$strobe("readM: %d, writeM: %d, address: %d, data: %d, temp_data: %d", readM, writeM, address, data, temp_data);
-		$strobe("instrFetch: %d, memAccess: %d", instrFetch, memAccess);
-		// NOTE END
 	end
 
 endmodule

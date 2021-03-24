@@ -28,11 +28,5 @@ module alu (alu_input_1, alu_input_2, alu_func_code, alu_output, zero);
 			`FUNC_BLZ: alu_output = (alu_input_1 < 0)? 0 : 1; // zero if alu_input_1 < 0
 			default: alu_output = 0; // not happen
 		endcase
-
-		// NOTE: This is for test! Before submit, delete this code!
-		$display("---ALU---");
-		$display("alu_func_code: %b", alu_func_code);
-		$display("input1: %d, input2: %d, output: %d", alu_input_1, alu_input_2, alu_output);
-		// NOTE END
 	end
 endmodule
