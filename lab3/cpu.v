@@ -12,7 +12,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 
 	// state PC
 	wire [`WORD_SIZE-1: 0] pc, pc_nxt;
-	reg [`WORD_SIZE-1: 0] stable_data, memory_data;
+	reg [`WORD_SIZE-1: 0] instruction, memory_data;
 
 	// wire for control_unit
 	wire alu_src, reg_write, mem_read, mem_to_reg, mem_write, branch, pc_to_reg, zero_extended;
@@ -45,9 +45,9 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	always @(*) begin
 		// instruction fetch
 		if (readM && inputReady && instrFetch)
-			stable_data = data;
+			instruction = data;
 		else
-			stable_data = stable_data;
+			instruction = instruction;
 		
 		// memory data fetch 
  		if (readM && inputReady && memAccess)
@@ -57,7 +57,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	
 		// NOTE: This is for test! Before submit, delete this code!
 		$display("---CPU---");
-		$display("stable_data: %h, memory_data: %h", stable_data, memory_data);
+		$display("instruction: %h, memory_data: %h", instruction, memory_data);
 		// NOTE END
 	end
 
@@ -89,7 +89,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	);
 
 	control_unit ControlUnit(
-		.instr(stable_data),
+		.instr(instruction),
 		.alu_src(alu_src),
 		.reg_write(reg_write),
 		.mem_read(mem_read),
@@ -102,15 +102,15 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	);
 	
 	alu_control_unit ALUControlUnit(
-		.instr(stable_data),
+		.instr(instruction),
 		.alu_func_code(alu_func_code)
 	);
 
 	register_file RegisterFile(
 		.read_out1(RF_read_out1),
 		.read_out2(RF_read_out2),
-		.read1(stable_data[11:10]),
-		.read2(stable_data[9:8]),
+		.read1(instruction[11:10]),
+		.read2(instruction[9:8]),
 		.write_reg(MUX_rt_write_out),
 		.write_data(MUX_pc_to_reg_out),
 		.reg_write(reg_write),
@@ -118,8 +118,8 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	);
 
 	mux4to1 #(.DATA_WIDTH(2)) MUX_rt_write(
-		.in1(stable_data[7:6]),
-		.in2(stable_data[9:8]),
+		.in1(instruction[7:6]),
+		.in2(instruction[9:8]),
 		.in3(2'b10),
 		.in4(2'b10),
 		.sel(rt_write),
@@ -134,7 +134,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	);
 
 	immediate_generator ImmGen(
-		.instr(stable_data),
+		.instr(instruction),
 		.immediate(immediate)
 	);
 
@@ -177,7 +177,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	
 	mux4to1 MUX_jp(
 		.in1(MUX_branch_high_out),
-		.in2({pc[15:12], stable_data[11:0]}),
+		.in2({pc[15:12], instruction[11:0]}),
 		.in3(alu_result),		
 		.in4(alu_result),
 		.sel(jp),
