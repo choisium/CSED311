@@ -19,37 +19,16 @@ always @(*) begin
                 default: alu_func_code = func_code[3:0];
             endcase
         end
-        `ADI_OP: begin
-            alu_func_code = `FUNC_ADD;
-        end
-        `ORI_OP: begin
-            alu_func_code = `FUNC_ORR;
-        end
-        `LHI_OP: begin // immediate : alu_input_2
-            alu_func_code = `FUNC_IP2;
-        end
-        `LWD_OP: begin
-            alu_func_code = `FUNC_ADD;
-        end
-        `SWD_OP: begin
-            alu_func_code = `FUNC_ADD;
-        end
-        `BNE_OP: begin // Zero if (input1 != input2)
-            alu_func_code = `FUNC_BNE;
-        end
-        `BEQ_OP: begin // Zero if (input1 == input2)
-            alu_func_code = `FUNC_SUB;
-        end
-        `BGZ_OP: begin // Zero if (input1 != 0 and positive)
-            alu_func_code = `FUNC_BGZ;
-        end
-        `BLZ_OP: begin // Zero if (input1 is negative)
-            alu_func_code = `FUNC_BLZ;
-        end
-
-   	    default: begin      // Don't use ALU
-            alu_func_code = 4'd15;
-	    end
+        `ADI_OP: alu_func_code = `FUNC_ADD;
+        `ORI_OP: alu_func_code = `FUNC_ORR;
+        `LHI_OP: alu_func_code = `FUNC_IP2; // immediate : alu_input_2
+        `LWD_OP: alu_func_code = `FUNC_ADD;
+        `SWD_OP: alu_func_code = `FUNC_ADD;
+        `BNE_OP: alu_func_code = `FUNC_BNE; // Zero if (input1 != input2)
+        `BEQ_OP: alu_func_code = `FUNC_SUB; // Zero if (input1 == input2)
+        `BGZ_OP: alu_func_code = `FUNC_BGZ; // Zero if (input1 != 0 and positive)
+        `BLZ_OP: alu_func_code = `FUNC_BLZ; // Zero if (input1 is negative)
+        default: alu_func_code = 4'd15;     // Don't use ALU
     endcase
 end
 

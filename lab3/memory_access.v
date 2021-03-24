@@ -2,21 +2,21 @@
 
 module memory_access (pc, pc_nxt, mem_read, mem_write, mem_address, mem_data,
 					  readM, writeM, address, data, ackOutput, inputReady, pc_update, 
-					  instrFetch, memAccess,
-					  reset_n, clk);
-	output reg [`WORD_SIZE-1: 0] pc, pc_nxt;
+					  instrFetch, memAccess, reset_n, clk);
+	output reg [`WORD_SIZE-1:0] pc, pc_nxt;
+	output reg [`WORD_SIZE-1:0] address;
 	output reg readM;
 	output reg writeM;
-	output reg [`WORD_SIZE-1:0] address;
-	output reg instrFetch, memAccess;
+	output reg instrFetch;
+	output reg memAccess;
 	inout [`WORD_SIZE-1:0] data;
 	input mem_read;
 	input mem_write;
 	input [`WORD_SIZE-1:0] mem_address;
 	input [`WORD_SIZE-1:0] mem_data;
+	input [`WORD_SIZE-1: 0] pc_update;
 	input ackOutput;
 	input inputReady;
-	input [`WORD_SIZE-1: 0] pc_update;
 	input reset_n;
 	input clk;
 
