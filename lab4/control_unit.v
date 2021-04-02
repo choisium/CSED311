@@ -15,24 +15,24 @@ module control_unit(opcode, func_code, clk, pc_write_cond, pc_write, i_or_d, mem
   reg [4:0] current_state, next_state;
 
   // localparam for states
-  localparam IF = 5d'0;
-  localparam ID = 5d'1;
-  localparam R_EX = 5d'2;
-  localparam R_WB = 5d'3;
-  localparam I_EX = 5d'4;
-  localparam I_WB = 5d'5;
-  localparam MEM_EX = 5d'6;
-  localparam LD_MEM = 5d'7;
-  localparam LD_WB = 5d'8;
-  localparam SD_MEM = 5d'9;
-  localparam BCheck = 5d'10;
-  localparam BComplete = 5d'11;
-  localparam JAL = 5d'12;
-  localparam JMP = 5d'13;
-  localparam JRL = 5d'14;
-  localparam JPR = 5d'15;
-  localparam WWD = 5d'16;
-  localparam HLT = 5d'17;
+  localparam IF = 5'd0;
+  localparam ID = 5'd1;
+  localparam R_EX = 5'd2;
+  localparam R_WB = 5'd3;
+  localparam I_EX = 5'd4;
+  localparam I_WB = 5'd5;
+  localparam MEM_EX = 5'd6;
+  localparam LD_MEM = 5'd7;
+  localparam LD_WB = 5'd8;
+  localparam SD_MEM = 5'd9;
+  localparam BCheck = 5'd10;
+  localparam BComplete = 5'd11;
+  localparam JAL = 5'd12;
+  localparam JMP = 5'd13;
+  localparam JRL = 5'd14;
+  localparam JPR = 5'd15;
+  localparam WWD = 5'd16;
+  localparam HLT = 5'd17;
 
   initial begin
     current_state <= 0;
@@ -58,6 +58,7 @@ module control_unit(opcode, func_code, clk, pc_write_cond, pc_write, i_or_d, mem
                   `INST_FUNC_HLT: next_state <= HLT;
                   default: next_state <= R_EX;
                 endcase
+              end
             `ADI_OP, `ORI_OP, `LHI_OP: next_state <= I_EX;
             `LWD_OP, `SWD_OP: next_state <= MEM_EX;
             `BNE_OP, `BEQ_OP, `BGZ_OP, `BLZ_OP: next_state <= BCheck;
@@ -98,9 +99,9 @@ module control_unit(opcode, func_code, clk, pc_write_cond, pc_write, i_or_d, mem
     halt <= 0;
     wwd <= 0;
     new_inst <= 0;
-    reg_write <= 2b'00;
-    alu_src_A <= 2b'00;
-    alu_src_B <= 2b'00;
+    reg_write <= 2'b00;
+    alu_src_A <= 2'b00;
+    alu_src_B <= 2'b00;
     alu_op <= 0;
     
     case (current_state) 
@@ -110,43 +111,43 @@ module control_unit(opcode, func_code, clk, pc_write_cond, pc_write, i_or_d, mem
         i_or_d <= 0;
         ir_write <= 1;
         pc_write <= 1;
-        alu_src_A <= 2b'00;
-        alu_src_B <= 2b'01;
+        alu_src_A <= 2'b00;
+        alu_src_B <= 2'b01;
         alu_op <= 0;
         new_inst <= 1;
       end
       
       ID: begin
-        alu_src_A <= 2b'00;
-        alu_src_B <= 2b'11;
+        alu_src_A <= 2'b00;
+        alu_src_B <= 2'b11;
         alu_op <= 0;
       end
       
       R_EX: begin
-        alu_src_A <= 2b'01;
-        alu_src_B <= 2b'00;
+        alu_src_A <= 2'b01;
+        alu_src_B <= 2'b00;
         alu_op <= 1;
       end
       
       R_WB: begin
-        reg_write <= 2b'01;
+        reg_write <= 2'b01;
         mem_to_reg <= 0;
       end
       
       I_EX: begin
-        alu_src_A <= 2b'01;
-        alu_src_B <= 2b'10;
+        alu_src_A <= 2'b01;
+        alu_src_B <= 2'b10;
         alu_op <= 1;
       end
       
       I_WB: begin
-        reg_write <= 2b'10;
+        reg_write <= 2'b10;
         mem_to_reg <= 0;
       end
       
       MEM_EX: begin
-        alu_src_A <= 2b'01;
-        alu_src_B <= 2b'10;
+        alu_src_A <= 2'b01;
+        alu_src_B <= 2'b10;
         alu_op <= 0;
       end
 
@@ -156,7 +157,7 @@ module control_unit(opcode, func_code, clk, pc_write_cond, pc_write, i_or_d, mem
       end
 
       LD_WB: begin
-        reg_write <= 2b'10;
+        reg_write <= 2'b10;
         mem_to_reg <= 1;
       end
 
@@ -166,14 +167,14 @@ module control_unit(opcode, func_code, clk, pc_write_cond, pc_write, i_or_d, mem
       end
 
       BCheck: begin
-        alu_src_A <= 2b'01;
-        alu_src_B <= 2b'00;
+        alu_src_A <= 2'b01;
+        alu_src_B <= 2'b00;
         alu_op <= 1; 
       end
 
       BComplete: begin
-        alu_src_A <= 2b'00;
-        alu_src_B <= 2b'10;
+        alu_src_A <= 2'b00;
+        alu_src_B <= 2'b10;
         pc_write_cond <= 1;
         pc_src <= 0;
         alu_op <= 0;
@@ -181,7 +182,7 @@ module control_unit(opcode, func_code, clk, pc_write_cond, pc_write, i_or_d, mem
 
       JAL: begin
         pc_to_reg <= 1;
-        reg_wrtie <= 2b'11;
+        reg_write <= 2'b11;
       end
 
       JMP: begin
@@ -191,12 +192,12 @@ module control_unit(opcode, func_code, clk, pc_write_cond, pc_write, i_or_d, mem
 
       JRL: begin
         pc_to_reg <= 1;
-        reg_write <= 2b'11;
+        reg_write <= 2'b11;
       end
 
       JPR: begin
-        alu_src_A <= 2b'01;
-        alu_src_B <= 2b'11;
+        alu_src_A <= 2'b01;
+        alu_src_B <= 2'b11;
         pc_write <= 1;
         pc_src <= 0;
         alu_op <= 1;
@@ -204,8 +205,8 @@ module control_unit(opcode, func_code, clk, pc_write_cond, pc_write, i_or_d, mem
 
       WWD: begin
         wwd <= 1;
-        alu_src_A <= 2b'01;
-        alu_src_B <= 2b'11;
+        alu_src_A <= 2'b01;
+        alu_src_B <= 2'b11;
         alu_op <= 1;
       end
 

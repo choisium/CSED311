@@ -12,16 +12,16 @@ module alu (A, B, func_code, branch_type, C, overflow_flag, bcond);
    output reg bcond; //1 if branch condition met, else 0
 
    // localparam for branch types
-   localparam BNE = 2d'0;
-   localparam BEQ = 2d'1;
-   localparam BGZ = 2d'2;
-   localparam BLZ = 2d'3;
+   localparam BNE = 2'd0;
+   localparam BEQ = 2'd1;
+   localparam BGZ = 2'd2;
+   localparam BLZ = 2'd3;
 
    always @(*) begin
-      
+
       // reset output
       C = 0;
-      overflow = 0;
+      overflow_flag = 0;
    
       case(func_code)
          `FUNC_ADD: begin 
@@ -50,13 +50,13 @@ module alu (A, B, func_code, branch_type, C, overflow_flag, bcond);
          `FUNC_ID1: C = A;
          `FUNC_ID2: C = B;
          `FUNC_Bxx: begin
-            case(branch_type) begin
+            case(branch_type) 
                BNE: bcond = (A != B)? 1 : 0; // 1 if not equal
                BEQ: bcond = (A == B)? 1 : 0; // 1 if equal
                BGZ: bcond = (A > 0)? 1 : 0; //  1 if A > 0
                BLZ: bcond = (A < 0)? 1 : 0; //  1 if A < 0
-            end
-            C = bcond
+            endcase
+            C = bcond;
          end
 
          default: begin // not happen 
