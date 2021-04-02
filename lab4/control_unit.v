@@ -77,8 +77,6 @@ module control_unit(opcode, func_code, clk, pc_write_cond, pc_write, i_or_d, mem
         end
         LD_MEM: next_state <= LD_WB;
         BCheck: next_state <= BComplete;
-        JAL: next_state <= JMP;
-        JRL: next_state <= JPR;
         default: next_state <= IF; // leaf node states -> IF
     endcase
   end
@@ -183,6 +181,8 @@ module control_unit(opcode, func_code, clk, pc_write_cond, pc_write, i_or_d, mem
       JAL: begin
         pc_to_reg <= 1;
         reg_write <= 2'b11;
+        pc_write <= 1;
+        pc_src <= 1;
       end
 
       JMP: begin
@@ -193,6 +193,11 @@ module control_unit(opcode, func_code, clk, pc_write_cond, pc_write, i_or_d, mem
       JRL: begin
         pc_to_reg <= 1;
         reg_write <= 2'b11;
+        alu_src_A <= 2'b01;
+        alu_src_B <= 2'b11;
+        pc_write <= 1;
+        pc_src <= 0;
+        alu_op <= 1;
       end
 
       JPR: begin
