@@ -31,6 +31,15 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 	wire[`WORD_SIZE-1:0] reg_write_data;
 	wire[`WORD_SIZE-1:0] reg_read_out1, reg_read_out2;
 
+	// alu_control_unit
+	wire[3:0] alu_func_code;
+	wire[1:0] branch_type;
+
+	//alu
+	wire[`WORD_SIZE-1:0] alu_src_A_data, alu_src_B_data, alu_output;
+	wire alu_overflow_flag, alu_bcond;
+	reg[`WORD_SIZE-1:0] alu_output_reg;
+
 	// mux
 	wire[`WORD_SIZE-1:0] pc_1, pc_nxt;
 	wire reg_write_control;
@@ -38,6 +47,7 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 
 	// temporary data
 	reg[`WORD_SIZE-1:0] mem_write_data;
+
 
 	// initialization
 	initial begin
@@ -106,6 +116,18 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 
 	end
 
+	// alu
+	always @(posedge clk) begin
+		if (!reset_n)
+			alu_output_reg <= 0;
+		else
+			alu_output_reg <= alu_output;	
+	end
+
+	always @(posedge clk) begin
+		$display("immediate: %d, alu_output: %d, reg_write_data: %d", immediate, alu_output, reg_write_data);
+	end
+
 
 	control_unit ControlUnit(
 		.opcode(instruction[15:12]),
@@ -147,6 +169,25 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 		.read_out2(reg_read_out2)
 	);
 
+	alu_control_unit ALUControlUnit(
+		.funct(instruction[5:0]),
+		.opcode(instruction[15:12]),
+		.ALUOp(alu_op),
+		.clk(clk),
+		.funcCode(alu_func_code),
+		.branchType(branch_type)
+	);
+
+	alu ALU(
+		.A(alu_src_A_data),
+		.B(alu_src_B_data),
+		.func_code(alu_func_code),
+		.branch_type(branch_type),
+		.C(alu_output),
+		.overflow_flag(alu_overflow_flag),
+		.bcond(alu_bcond)
+	);
+
 	mux2_1 MUX_pc_src(
 		.sel({1'b0, pc_src}),
 		.i1(pc_1),
@@ -161,6 +202,29 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 		.i3(instruction[9:8]),
 		.i4(2'b10),
 		.o(reg_write_address)
+	);
+
+	mux2_1 MUX_alu_src_A(
+		.sel(alu_src_A),
+		.i1(pc),
+		.i2(reg_read_out1),
+		.o(alu_src_A_data)
+	);
+
+	mux4_1 MUX_alu_src_B(
+		.sel(alu_src_B),
+		.i1(alu_src_B_data),
+		.i2(`WORD_SIZE'b1),
+		.i3(immediate),
+		.i4(`WORD_SIZE'b0),
+		.o(alu_src_B_data)
+	);
+
+	mux2_1 MUX_mem_to_reg(
+		.sel({1'b0, mem_to_reg}),
+		.i1(alu_output_reg),
+		.i2(alu_output_reg),
+		.o(reg_write_data)
 	);
 
 endmodule
