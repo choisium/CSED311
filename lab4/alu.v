@@ -66,8 +66,4 @@ module alu (A, B, func_code, branch_type, C, overflow_flag, bcond);
          end
       endcase
    end
-
-   always @(*) begin
-      $display("ALU - A: %h, B: %h, C: %h, bcond: %b, A>0: %b", A, B, C, bcond, A[15] == 0 && A != 0);
-   end
 endmodule

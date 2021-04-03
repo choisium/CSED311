@@ -26,8 +26,4 @@ module register_file(read_out1, read_out2, read1, read2, write_reg, write_data, 
         else RF[write_reg] <= RF[write_reg];
     end
 
-    always @(posedge clk) begin
-        $display("register file - 0: %0h, 1: %0h, 2: %0h, 3:%0h / reg_write: %0h, write_data: %0h", RF[0], RF[1], RF[2], RF[3], reg_write, write_data);
-    end
-
 endmodule

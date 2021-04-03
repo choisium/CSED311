@@ -46,7 +46,6 @@ module control_unit(opcode, func_code, clk, reset_n, pc_write_cond, pc_write, i_
       current_state <= 0;
     else begin
       current_state <= next_state;
-      $display("\nstate update %d <- %d", current_state, next_state);
     end
   end
 

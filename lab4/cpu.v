@@ -84,30 +84,25 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 		else begin
 			// update pc
 			if (pc_write || (pc_write_cond && alu_bcond)) begin
-				$display("update pc %0h <- %0h", pc, pc_nxt);
 				pc <= pc_nxt;
 			end
 
 			// fetch instruction
 			if (ir_write) begin
-				$display("fetch instruction %0h <- %0h", instruction, data);
 				instruction <= data;
 			end
 			// or get data from memory
 			else if (read_m) begin
-				$display("get memory data %0h <- %0h", mem_read_data, data);
 				mem_read_data <= data;
 			end
 			
 			// update num_inst
 			if (new_inst) begin
-				$display("instruction done %0d <- %0d\n\n", num_inst, num_inst + 1);
 				num_inst <= num_inst + 1;
 			end
 
 			// export data to output_port
 			if (wwd) begin
-				$display("wwd: %0d <- %0d", output_port_reg, reg_read_out1);
 				output_port_reg <= reg_read_out1;
 			end
 
@@ -115,23 +110,6 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 			alu_output_reg <= alu_output;
 			mem_write_data <= reg_read_out2;
 		end
-	end
-
-	always @(posedge clk) begin
-		$display("pc: %h, pc_nxt: %h", pc, pc_nxt);
-	end
-
-	always @(posedge clk) begin
-		$display("opcode: %d, immediate: %d, alu_output: %h, alu_bcond: %b, pc_write_cond: %b, pc_src: %b pc_write: %b, pc_nxt: %h", instruction[15:12], immediate, alu_output, alu_bcond, pc_write_cond, pc_src, pc_write, pc_nxt);
-	end
-
-	always @(posedge clk) begin
-		$display("write_m: %b, address: %d, data: %d", write_m, alu_output, reg_write_data);
-	end
-
-	always @(posedge clk) begin
-		if (halt)
-			$display("halt!!!! %b", halt);
 	end
 
 
