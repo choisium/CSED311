@@ -42,6 +42,7 @@ module control_unit(opcode, func_code, clk, pc_write_cond, pc_write, i_or_d, mem
   // update state 
   always @(posedge clk) begin
     current_state <= next_state;
+    $display("state update %d <- %d", current_state, next_state);
   end
 
   // logic for next state
@@ -80,7 +81,7 @@ module control_unit(opcode, func_code, clk, pc_write_cond, pc_write, i_or_d, mem
         HLT: next_state <= HLT;
         default: begin 
           next_state <= IF; // leaf node states -> IF
-          new_inst <= 1
+          new_inst <= 1;
         end
     endcase
   end
