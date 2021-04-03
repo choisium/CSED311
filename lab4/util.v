@@ -1,7 +1,7 @@
-module mux4_1 (sel, i1, i2, i3, i4, o);
+module mux4_1 #(parameter DATA_WIDTH = 16) (sel, i1, i2, i3, i4, o);
    input [1:0] sel;
-   input [15:0] i1, i2, i3, i4;
-   output reg [15:0] o;
+   input [DATA_WIDTH-1:0] i1, i2, i3, i4;
+   output reg [DATA_WIDTH-1:0] o;
 
    always @ (*) begin
       case (sel)
@@ -15,10 +15,10 @@ module mux4_1 (sel, i1, i2, i3, i4, o);
 endmodule
 
 
-module mux2_1 (sel, i1, i2, o);
+module mux2_1 #(parameter DATA_WIDTH = 16) (sel, i1, i2, o);
    input [1:0] sel;
-   input [15:0] i1, i2;
-   output reg [15:0] o;
+   input [DATA_WIDTH-1:0] i1, i2;
+   output reg [DATA_WIDTH-1:0] o;
 
    always @ (*) begin
       case (sel)

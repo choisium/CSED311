@@ -1,9 +1,10 @@
 `include "opcodes.v"
 
-module control_unit(opcode, func_code, clk, pc_write_cond, pc_write, i_or_d, mem_read, mem_to_reg, mem_write, ir_write, pc_to_reg, pc_src, halt, wwd, new_inst, reg_write, alu_src_A, alu_src_B, alu_op);
+module control_unit(opcode, func_code, clk, reset_n, pc_write_cond, pc_write, i_or_d, mem_read, mem_to_reg, mem_write, ir_write, pc_to_reg, pc_src, halt, wwd, new_inst, reg_write, alu_src_A, alu_src_B, alu_op);
   input [3:0] opcode;
   input [5:0] func_code;
   input clk;
+  input reset_n;
 
   output reg pc_write_cond, pc_write, i_or_d, mem_read, mem_to_reg, mem_write, ir_write, pc_src;
   //additional control signals. pc_to_reg: to support JAL, JRL. halt: to support HLT. wwd: to support WWD. new_inst: new instruction start
@@ -41,8 +42,12 @@ module control_unit(opcode, func_code, clk, pc_write_cond, pc_write, i_or_d, mem
 
   // update state 
   always @(posedge clk) begin
-    current_state <= next_state;
-    $display("state update %d <- %d", current_state, next_state);
+    if (!reset_n)
+      current_state <= 0;
+    else begin
+      current_state <= next_state;
+      $display("\nstate update %d <- %d", current_state, next_state);
+    end
   end
 
   // logic for next state
