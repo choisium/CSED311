@@ -59,69 +59,46 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 
 	assign reg_write_control = reg_write != 0;
 
-	// update pc
+	// for pc update
 	assign pc_1 = pc + 1;
-
-	always @(posedge clk) begin
-		if (!reset_n)
-			pc <= 0;
-		else if (pc_write) begin
-			$display("update pc %0d <- %0d", pc, pc_nxt);
-			pc <= pc_nxt;
-		end
-		else
-			pc <= pc;
-	end
-
+	
 	// get instruction from memory
 	assign read_m = mem_read;
 	assign write_m = mem_write;
 	assign address = pc;
 	assign data = read_m? `WORD_SIZE'bz: mem_write_data;
-
-	always @(posedge clk) begin
-		if (!reset_n)
-			instruction <= 0;
-		else if (ir_write) begin
-			$display("fetch instruction %0h <- %0h", instruction, data);
-			instruction <= data;
-		end
-		else
-			instruction <= instruction;
-	end
-
-	// update num_inst
-	always @(posedge clk) begin
-		if (!reset_n)
-			num_inst <= 0;
-		else if (new_inst) begin
-			$display("instruction done %0d <- %0d\n\n", num_inst, num_inst + 1);
-			num_inst <= num_inst + 1;
-		end
-		else
-			num_inst <= num_inst;
-	end
-
+	
 	// wwd
 	assign output_port = output_port_reg;
+
 	always @(posedge clk) begin
-		if (!reset_n)
+		if (!reset_n) begin
+			pc <= 0;
+			instruction <= 0;
+			num_inst <= 0;
 			output_port_reg <= 0;
-		else if (wwd) begin
-			$display("wwd: %0d <- %0d", output_port_reg, reg_read_out1);
-			output_port_reg <= reg_read_out1;
-		end
-		else
-			output_port_reg <= output_port_reg;
-
-	end
-
-	// alu
-	always @(posedge clk) begin
-		if (!reset_n)
 			alu_output_reg <= 0;
-		else
-			alu_output_reg <= alu_output;	
+		end
+		// update pc
+		else begin
+			if (pc_write) begin
+				$display("update pc %0d <- %0d", pc, pc_nxt);
+				pc <= pc_nxt;
+			end
+			if (ir_write) begin
+				$display("fetch instruction %0h <- %0h", instruction, data);
+				instruction <= data;
+			end
+			if (new_inst) begin
+				$display("instruction done %0d <- %0d\n\n", num_inst, num_inst + 1);
+				num_inst <= num_inst + 1;
+			end
+			if (wwd) begin
+				$display("wwd: %0d <- %0d", output_port_reg, reg_read_out1);
+				output_port_reg <= reg_read_out1;
+			end
+			alu_output_reg <= alu_output;
+		end
 	end
 
 	always @(posedge clk) begin
