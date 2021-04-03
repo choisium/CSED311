@@ -82,7 +82,7 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 		// update pc
 		else begin
 			if (pc_write) begin
-				$display("update pc %0d <- %0d", pc, pc_nxt);
+				$display("update pc %0h <- %0h", pc, pc_nxt);
 				pc <= pc_nxt;
 			end
 			if (ir_write) begin
@@ -190,7 +190,7 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 
 	mux4_1 MUX_alu_src_B(
 		.sel(alu_src_B),
-		.i1(alu_src_B_data),
+		.i1(reg_read_out2),
 		.i2(`WORD_SIZE'b1),
 		.i3(immediate),
 		.i4(`WORD_SIZE'b0),
