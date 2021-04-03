@@ -77,7 +77,11 @@ module control_unit(opcode, func_code, clk, pc_write_cond, pc_write, i_or_d, mem
         end
         LD_MEM: next_state <= LD_WB;
         BCheck: next_state <= BComplete;
-        default: next_state <= IF; // leaf node states -> IF
+        HLT: next_state <= HLT;
+        default: begin 
+          next_state <= IF; // leaf node states -> IF
+          new_inst <= 1
+        end
     endcase
   end
 
@@ -112,7 +116,7 @@ module control_unit(opcode, func_code, clk, pc_write_cond, pc_write, i_or_d, mem
         alu_src_A <= 2'b00;
         alu_src_B <= 2'b01;
         alu_op <= 0;
-        new_inst <= 1;
+        new_inst <= 0;
       end
       
       ID: begin
