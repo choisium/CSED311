@@ -21,7 +21,7 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 
 	// control_unit
 	wire pc_write_cond, pc_write, i_or_d, mem_read, mem_to_reg, mem_write, ir_write, pc_src;
-	wire pc_to_reg, halt, wwd, new_inst;
+	wire pc_to_reg, wwd, new_inst;
 	wire [1:0] reg_write, alu_src_A, alu_src_B;
 	wire alu_op;
 
@@ -42,7 +42,7 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 	reg[`WORD_SIZE-1:0] alu_output_reg;
 
 	// mux
-	wire[`WORD_SIZE-1:0] pc_1, pc_nxt;
+	wire[`WORD_SIZE-1:0] pc_nxt;
 	wire reg_write_control;
 	wire[1:0] reg_write_address;
 
@@ -59,9 +59,6 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 	end
 
 	assign reg_write_control = reg_write != 0;
-
-	// for pc update
-	assign pc_1 = pc + 1;
 	
 	// get instruction from memory
 	assign read_m = mem_read;
@@ -127,7 +124,7 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 		.ir_write(ir_write),
 		.pc_src(pc_src),
 		.pc_to_reg(pc_to_reg),
-		.halt(halt),
+		.halt(is_halted),
 		.wwd(wwd),
 		.new_inst(new_inst),
 		.reg_write(reg_write),
