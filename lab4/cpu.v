@@ -24,6 +24,9 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 	wire [1:0] reg_write, alu_src_A, alu_src_B;
 	wire alu_op;
 
+	// mux
+	wire[`WORD_SIZE-1:0] pc_1, pc_nxt;
+
 	// temporary data
 	reg[`WORD_SIZE-1:0] mem_write_data;
 
@@ -33,12 +36,14 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 		mem_write_data <= 0;
 	end
 
+	assign pc_1 = pc + 1;
+
 	always @(posedge clk) begin
 		if (!reset_n)
 			pc <= 0;
 		else if (pc_write) begin
-			$display("update pc %d <- %d", pc, pc + 1);
-			pc <= pc + 1;
+			$display("update pc %d <- %d", pc, pc_nxt);
+			pc <= pc_nxt;
 		end
 		else
 			pc <= pc;
@@ -92,6 +97,19 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 		.alu_src_A(alu_src_A),
 		.alu_src_B(alu_src_B),
 		.alu_op(alu_op)
+	);
+
+	// immediate_generator ImmGen(
+	// 	.opcode(instruction[15:12]),
+	// 	.imm(instruction[7:0]),
+	// 	.immediate(immediate)
+	// );
+
+	mux2_1 MUX_pc_src(
+		.sel({1'b0, pc_src}),
+		.i1(pc_1),
+		.i2({pc[15:12], instruction[11:0]}),
+		.o(pc_nxt)
 	);
 
 endmodule
