@@ -27,7 +27,7 @@ module register_file(read_out1, read_out2, read1, read2, write_reg, write_data, 
     end
 
     always @(posedge clk) begin
-        $display("register file - 0: %0d, 1: %0d, 2: %0d, 3:%0d / reg_write: %b, write_data: %d", RF[0], RF[1], RF[2], RF[3], reg_write, write_data);
+        $display("register file - 0: %0h, 1: %0h, 2: %0h, 3:%0h / reg_write: %0h, write_data: %0h", RF[0], RF[1], RF[2], RF[3], reg_write, write_data);
     end
 
 endmodule

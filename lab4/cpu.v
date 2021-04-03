@@ -16,7 +16,8 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 	output is_halted;
 
 	// pc state
-	reg[`WORD_SIZE-1:0] pc, instruction, output_port_reg;
+	reg[`WORD_SIZE-1:0] pc, instruction, output_port_reg, mem_read_data;
+	wire[`WORD_SIZE-1:0] mem_address;
 
 	// control_unit
 	wire pc_write_cond, pc_write, i_or_d, mem_read, mem_to_reg, mem_write, ir_write, pc_src;
@@ -45,7 +46,7 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 	wire reg_write_control;
 	wire[1:0] reg_write_address;
 
-	// temporary data
+	// memory
 	reg[`WORD_SIZE-1:0] mem_write_data;
 
 
@@ -65,7 +66,7 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 	// get instruction from memory
 	assign read_m = mem_read;
 	assign write_m = mem_write;
-	assign address = pc;
+	assign address = mem_address;
 	assign data = read_m? `WORD_SIZE'bz: mem_write_data;
 	
 	// wwd
@@ -75,34 +76,62 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 		if (!reset_n) begin
 			pc <= 0;
 			instruction <= 0;
+			mem_read_data <= 0;
 			num_inst <= 0;
 			output_port_reg <= 0;
 			alu_output_reg <= 0;
 		end
-		// update pc
 		else begin
-			if (pc_write) begin
+			// update pc
+			if (pc_write || (pc_write_cond && alu_bcond)) begin
 				$display("update pc %0h <- %0h", pc, pc_nxt);
 				pc <= pc_nxt;
 			end
+
+			// fetch instruction
 			if (ir_write) begin
 				$display("fetch instruction %0h <- %0h", instruction, data);
 				instruction <= data;
 			end
+			// or get data from memory
+			else if (read_m) begin
+				$display("get memory data %0h <- %0h", mem_read_data, data);
+				mem_read_data <= data;
+			end
+			
+			// update num_inst
 			if (new_inst) begin
 				$display("instruction done %0d <- %0d\n\n", num_inst, num_inst + 1);
 				num_inst <= num_inst + 1;
 			end
+
+			// export data to output_port
 			if (wwd) begin
 				$display("wwd: %0d <- %0d", output_port_reg, reg_read_out1);
 				output_port_reg <= reg_read_out1;
 			end
+
+			// keep alu_output to reg
 			alu_output_reg <= alu_output;
+			mem_write_data <= reg_read_out2;
 		end
 	end
 
 	always @(posedge clk) begin
-		$display("immediate: %d, alu_output: %d, reg_write_data: %d", immediate, alu_output, reg_write_data);
+		$display("pc: %h, pc_nxt: %h", pc, pc_nxt);
+	end
+
+	always @(posedge clk) begin
+		$display("opcode: %d, immediate: %d, alu_output: %h, alu_bcond: %b, pc_write_cond: %b, pc_src: %b pc_write: %b, pc_nxt: %h", instruction[15:12], immediate, alu_output, alu_bcond, pc_write_cond, pc_src, pc_write, pc_nxt);
+	end
+
+	always @(posedge clk) begin
+		$display("write_m: %b, address: %d, data: %d", write_m, alu_output, reg_write_data);
+	end
+
+	always @(posedge clk) begin
+		if (halt)
+			$display("halt!!!! %b", halt);
 	end
 
 
@@ -167,7 +196,7 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 
 	mux2_1 MUX_pc_src(
 		.sel({1'b0, pc_src}),
-		.i1(pc_1),
+		.i1(alu_output),
 		.i2({pc[15:12], instruction[11:0]}),
 		.o(pc_nxt)
 	);
@@ -200,8 +229,15 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 	mux2_1 MUX_mem_to_reg(
 		.sel({1'b0, mem_to_reg}),
 		.i1(alu_output_reg),
-		.i2(alu_output_reg),
+		.i2(mem_read_data),
 		.o(reg_write_data)
+	);
+
+	mux2_1 MUX_i_or_d(
+		.sel({1'b0, i_or_d}),
+		.i1(pc),
+		.i2(alu_output_reg),
+		.o(mem_address)
 	);
 
 endmodule
