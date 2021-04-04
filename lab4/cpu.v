@@ -20,9 +20,9 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 	wire[`WORD_SIZE-1:0] mem_address;
 
 	// control_unit
-	wire pc_write_cond, pc_write, i_or_d, mem_read, mem_to_reg, mem_write, ir_write, pc_src;
-	wire pc_to_reg, wwd, new_inst;
-	wire [1:0] reg_write, alu_src_A, alu_src_B;
+	wire pc_write_cond, pc_write, i_or_d, mem_read, mem_write, ir_write, pc_src;
+	wire wwd, new_inst;
+	wire [1:0] reg_write, alu_src_A, alu_src_B, mem_to_reg;
 	wire alu_op;
 
 	// immediate_generator
@@ -123,7 +123,6 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 		.mem_write(mem_write),
 		.ir_write(ir_write),
 		.pc_src(pc_src),
-		.pc_to_reg(pc_to_reg),
 		.halt(is_halted),
 		.wwd(wwd),
 		.new_inst(new_inst),
@@ -201,10 +200,12 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 		.o(alu_src_B_data)
 	);
 
-	mux2_1 MUX_mem_to_reg(
-		.sel({1'b0, mem_to_reg}),
+	mux4_1 MUX_mem_to_reg(
+		.sel(mem_to_reg),
 		.i1(alu_output_reg),
 		.i2(mem_read_data),
+		.i3(pc),
+		.i4(pc),
 		.o(reg_write_data)
 	);
 
