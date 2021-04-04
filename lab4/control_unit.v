@@ -1,15 +1,15 @@
 `include "opcodes.v"
 
-module control_unit(opcode, func_code, clk, reset_n, pc_write_cond, pc_write, i_or_d, mem_read, mem_to_reg, mem_write, ir_write, pc_to_reg, pc_src, halt, wwd, new_inst, reg_write, alu_src_A, alu_src_B, alu_op);
+module control_unit(opcode, func_code, clk, reset_n, pc_write_cond, pc_write, i_or_d, mem_read, mem_to_reg, mem_write, ir_write, pc_src, halt, wwd, new_inst, reg_write, alu_src_A, alu_src_B, alu_op);
   input [3:0] opcode;
   input [5:0] func_code;
   input clk;
   input reset_n;
 
-  output reg pc_write_cond, pc_write, i_or_d, mem_read, mem_to_reg, mem_write, ir_write, pc_src;
-  //additional control signals. pc_to_reg: to support JAL, JRL. halt: to support HLT. wwd: to support WWD. new_inst: new instruction start
-  output reg pc_to_reg, halt, wwd, new_inst;
-  output reg [1:0] reg_write, alu_src_A, alu_src_B;
+  output reg pc_write_cond, pc_write, i_or_d, mem_read, mem_write, ir_write, pc_src;
+  //additional control signals. halt: to support HLT. wwd: to support WWD. new_inst: new instruction start
+  output reg halt, wwd, new_inst;
+  output reg [1:0] reg_write, alu_src_A, alu_src_B, mem_to_reg;
   output reg alu_op;
 
   // state register
@@ -97,11 +97,10 @@ module control_unit(opcode, func_code, clk, reset_n, pc_write_cond, pc_write, i_
     pc_write = 0;
     i_or_d = 0;
     mem_read = 0;
-    mem_to_reg = 0;
+    mem_to_reg = 2'b00;
     mem_write = 0;
     ir_write = 0;
     pc_src = 0;
-    pc_to_reg = 0;
     halt = 0;
     wwd = 0;
     new_inst = 0;
@@ -137,7 +136,7 @@ module control_unit(opcode, func_code, clk, reset_n, pc_write_cond, pc_write, i_
       
       R_WB: begin
         reg_write = 2'b01;
-        mem_to_reg = 0;
+        mem_to_reg = 2'b00;
         new_inst = 1;
       end
       
@@ -149,7 +148,7 @@ module control_unit(opcode, func_code, clk, reset_n, pc_write_cond, pc_write, i_
       
       I_WB: begin
         reg_write = 2'b10;
-        mem_to_reg = 0;
+        mem_to_reg = 2'b00;
         new_inst = 1;
       end
       
@@ -166,7 +165,7 @@ module control_unit(opcode, func_code, clk, reset_n, pc_write_cond, pc_write, i_
 
       LD_WB: begin
         reg_write = 2'b10;
-        mem_to_reg = 1;
+        mem_to_reg = 2'b01;
         new_inst = 1;
       end
 
@@ -192,7 +191,7 @@ module control_unit(opcode, func_code, clk, reset_n, pc_write_cond, pc_write, i_
       end
 
       JAL: begin
-        pc_to_reg = 1;
+        mem_to_reg = 2'b10;
         reg_write = 2'b11;
         pc_write = 1;
         pc_src = 1;
@@ -206,7 +205,7 @@ module control_unit(opcode, func_code, clk, reset_n, pc_write_cond, pc_write, i_
       end
 
       JRL: begin
-        pc_to_reg = 1;
+        mem_to_reg = 2'b10;
         reg_write = 2'b11;
         alu_src_A = 2'b01;
         alu_src_B = 2'b11;
