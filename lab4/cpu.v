@@ -154,7 +154,6 @@ module cpu(clk, reset_n, read_m, write_m, address, data, num_inst, output_port, 
 		.funct(instruction[5:0]),
 		.opcode(instruction[15:12]),
 		.ALUOp(alu_op),
-		.clk(clk),
 		.funcCode(alu_func_code),
 		.branchType(branch_type)
 	);

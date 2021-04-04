@@ -1,8 +1,7 @@
 `include "opcodes.v"
 
-module alu_control_unit(funct, opcode, ALUOp, clk, funcCode, branchType);
+module alu_control_unit(funct, opcode, ALUOp, funcCode, branchType);
   input ALUOp;
-  input clk;
   input [5:0] funct;
   input [3:0] opcode;
 
