@@ -53,8 +53,8 @@ module alu (A, B, func_code, branch_type, C, overflow_flag, bcond);
             case(branch_type) 
                BNE: bcond = (A != B)? 1 : 0; // 1 if not equal
                BEQ: bcond = (A == B)? 1 : 0; // 1 if equal
-               BGZ: bcond = (A > 0)? 1 : 0; //  1 if A > 0
-               BLZ: bcond = (A < 0)? 1 : 0; //  1 if A < 0
+               BGZ: bcond = (A[15] == 0 && A != 0)? 1 : 0; //  1 if A > 0
+               BLZ: bcond = A[15]; //  1 if A < 0
             endcase
             C = bcond;
          end
