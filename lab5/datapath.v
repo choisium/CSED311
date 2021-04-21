@@ -4,6 +4,7 @@
 `include "control_unit.v" 
 `include "branch_predictor.v"
 `include "hazard.v"
+`include "util.v"
 
 module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, address2, data2, num_inst, output_port, is_halted);
 
@@ -27,9 +28,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 
 	// PC
 	reg[`WORD_SIZE-1:0] pc;
-	wire[`WORD_SIZE-1:0] predicted_pc, pc_nxt;  // predicted_pc
-
-	assign pc_nxt = predicted_pc;  // temporary pc selection!
+	wire[`WORD_SIZE-1:0] pc_nxt;  // predicted_pc
 
 	// IF/ID pipeline register & ID stage wire and reg
 	reg[`WORD_SIZE-1:0] pc_id, instr;
@@ -39,6 +38,13 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 
 	// ID/EX pipeline register & EX stage wire and reg
 	reg[`WORD_SIZE-1:0] pc_ex;
+	wire[`WORD_SIZE-1:0] actual_pc;
+	reg alu_src_ex, branch_ex, mem_read_ex, mem_write_ex, reg_write_ex, wwd_ex, new_inst_ex;
+	reg[1:0] pc_src_ex, reg_dest_ex, reg_src_ex, alu_branch_type_ex;
+	reg[3:0] alu_func_code_ex;
+
+	reg[11:0] target;
+	wire flush;
 
 	// EX/MEM pipeline register & EX stage wire and reg
 	reg[`WORD_SIZE-1:0] pc_mem;
@@ -74,15 +80,22 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	end
 
 	always @(*) begin
-		$strobe("address1: %h, data1: %h, pc: %h, pc_id: %h, instr: %h", address1, data1, pc, pc_id, instr);
+		$strobe("address1: %h, data1: %h, instr: %h", address1, data1, instr);
+	end
+
+	assign flush = actual_pc != pc_ex? 1: 0;
+	always @(*) begin
+		$display("pc_nxt: %h, pc: %h, pc_id: %h, pc_ex: %h, pc_mem: %h, pc_wb: %h", pc_nxt, pc, pc_id, pc_ex, pc_mem, pc_wb);
+		$display("actual_pc: %h, flush: %b, pc_src_ex: %b", actual_pc, flush, pc_src_ex);
 	end
 
 	// update pipeline register
 	always @(posedge clk) begin
+		$strobe("--- clk posedge --- pc: %h, pc_nxt: %h", pc, pc_nxt);
 		if (!reset_n) begin
 			pc <= 0;
 			pc_id <= 0;
-			pc_ex <= 0;
+			pc_ex <= 0; pc_src_ex <= 0; target <= 0;
 			pc_mem <= 0;
 			pc_wb <= 0;
 		end
@@ -93,6 +106,8 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 			pc_id <= pc;
 			// update ID/EX pipeline register
 			pc_ex <= pc_id;
+			pc_src_ex <= pc_src_id;
+			target <= instr[11:0];
 			// update EX/MEM pipeline register
 			pc_mem <= pc_ex;
 			// update MEM/WB pipeline register
@@ -104,11 +119,11 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		.clk(clk),
 		.reset_n(reset_n),
 		.PC(pc),
-		.is_flush(1'b0),
+		.is_flush(flush),
 		.is_BJ_type(1'b0),
 		.actual_next_PC(`WORD_SIZE'b0),
-		.actual_PC(`WORD_SIZE'b0),
-		.next_PC(predicted_pc)
+		.actual_PC(actual_pc),
+		.next_PC(pc_nxt)
 	);
 
 	control_unit ControlUnit(
@@ -132,6 +147,16 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		.alu_branch_type(alu_branch_type_id),
 		.alu_func_code(alu_func_code_id)
 	);
+
+	mux4_1 MUX_pc_src(
+		.sel(pc_src_ex),
+		.i1(pc_ex),
+		.i2({pc_ex[15:12], target}),
+		.i3({pc_ex[15:12], target}),
+		.i4({pc_ex[15:12], target}),
+		.o(actual_pc)
+	);
+
 
 endmodule
 
