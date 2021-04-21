@@ -32,19 +32,25 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 
 	// IF/ID pipeline register & ID stage wire and reg
 	reg[`WORD_SIZE-1:0] pc_id, instr;
+		// control signals
 	wire halt, use_rs, use_rt, alu_src_id, branch_id, mem_read_id, mem_write_id, reg_write_id, wwd_id, new_inst_id;
 	wire[1:0] pc_src_id, reg_dest_id, reg_src_id, alu_branch_type_id;
 	wire[3:0] alu_func_code_id;
+		// additional wire and reg
+	wire[`WORD_SIZE-1:0] rf_rs, rf_rt;
 
 	// ID/EX pipeline register & EX stage wire and reg
-	reg[`WORD_SIZE-1:0] pc_ex;
+	reg[`WORD_SIZE-1:0] pc_ex, rf_rs_ex, rf_rt_ex;
 	wire[`WORD_SIZE-1:0] actual_pc;
+		// control signals
 	reg alu_src_ex, branch_ex, mem_read_ex, mem_write_ex, reg_write_ex, wwd_ex, new_inst_ex;
 	reg[1:0] pc_src_ex, reg_dest_ex, reg_src_ex, alu_branch_type_ex;
 	reg[3:0] alu_func_code_ex;
-
+		// additional wire and reg
 	reg[11:0] target;
 	wire flush;
+	wire[`WORD_SIZE-1:0] alu_out, pc_branch;
+	wire alu_overflow_flag, alu_bcond;
 
 	// EX/MEM pipeline register & EX stage wire and reg
 	reg[`WORD_SIZE-1:0] pc_mem;
@@ -79,14 +85,16 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		end
 	end
 
-	always @(*) begin
-		$strobe("address1: %h, data1: %h, instr: %h", address1, data1, instr);
-	end
+	// always @(*) begin
+	// 	$strobe("address1: %h, data1: %h, instr: %h", address1, data1, instr);
+	// end
 
 	assign flush = actual_pc != pc_ex? 1: 0;
 	always @(*) begin
-		$display("pc_nxt: %h, pc: %h, pc_id: %h, pc_ex: %h, pc_mem: %h, pc_wb: %h", pc_nxt, pc, pc_id, pc_ex, pc_mem, pc_wb);
-		$display("actual_pc: %h, flush: %b, pc_src_ex: %b", actual_pc, flush, pc_src_ex);
+		$display("pc: %h, pc_id: %h, pc_ex: %h, pc_mem: %h, pc_wb: %h", pc, pc_id, pc_ex, pc_mem, pc_wb);
+
+		// $display("pc_nxt: %h, pc: %h, pc_id: %h, pc_ex: %h, pc_mem: %h, pc_wb: %h", pc_nxt, pc, pc_id, pc_ex, pc_mem, pc_wb);
+		// $display("actual_pc: %h, flush: %b, pc_src_ex: %b", actual_pc, flush, pc_src_ex);
 	end
 
 	// update pipeline register
@@ -95,7 +103,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		if (!reset_n) begin
 			pc <= 0;
 			pc_id <= 0;
-			pc_ex <= 0; pc_src_ex <= 0; target <= 0;
+			pc_ex <= 0; pc_src_ex <= 0; target <= 0; rf_rs_ex <= 0; rf_rt_ex <= 0; branch_ex <= 0;
 			pc_mem <= 0;
 			pc_wb <= 0;
 		end
@@ -108,6 +116,9 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 			pc_ex <= pc_id;
 			pc_src_ex <= pc_src_id;
 			target <= instr[11:0];
+			rf_rs_ex <= rf_rs;
+			rf_rt_ex <= rf_rt;
+			branch_ex <= branch_id;
 			// update EX/MEM pipeline register
 			pc_mem <= pc_ex;
 			// update MEM/WB pipeline register
@@ -148,9 +159,42 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		.alu_func_code(alu_func_code_id)
 	);
 
+	register_file RegisterFile(
+		.clk(clk),
+		.reset_n(reset_n),
+		.read1(instr[11:10]),
+		.read2(instr[9:8]),
+		.dest(instr[7:6]),
+		.reg_write(1'b0),
+		.write_data(`WORD_SIZE'b0),
+		.read_out1(rf_rs),
+		.read_out2(rf_rt)
+	);
+
+	alu ALU(
+		.A(rf_rs_ex),
+		.B(rf_rt_ex),
+		.func_code(alu_func_code_ex),
+		.branch_type(alu_branch_type_ex),
+		.alu_out(alu_out),
+		.overflow_flag(alu_overflow_flag),
+		.bcond(alu_bcond)
+	);
+
+	mux2_1 MUX_branch(
+		.sel(branch_ex & alu_bcond),
+		.i1(pc_ex),
+		.i2(pc_ex),
+		.o(pc_branch)
+	);
+
+	// always @(*) begin
+	// 	$display("branch_ex: %b, alu_bcond: %b, pc_ex: %h, pc_branch: %h", branch_ex, alu_bcond, pc_ex, pc_branch);
+	// end
+
 	mux4_1 MUX_pc_src(
 		.sel(pc_src_ex),
-		.i1(pc_ex),
+		.i1(pc_branch),
 		.i2({pc_ex[15:12], target}),
 		.i3({pc_ex[15:12], target}),
 		.i4({pc_ex[15:12], target}),

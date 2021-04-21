@@ -16,7 +16,7 @@ endmodule
 
 
 module mux2_1 #(parameter DATA_WIDTH = 16) (sel, i1, i2, o);
-   input [1:0] sel;
+   input sel;
    input [DATA_WIDTH-1:0] i1, i2;
    output reg [DATA_WIDTH-1:0] o;
 
