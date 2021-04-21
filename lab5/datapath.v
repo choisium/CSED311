@@ -25,5 +25,70 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 
 	//TODO: implement datapath of pipelined CPU
 
+	// PC
+	reg[`WORD_SIZE-1:0] pc;
+	wire[`WORD_SIZE-1:0] predicted_pc, pc_nxt;  // predicted_pc
+
+	assign pc_nxt = predicted_pc;  // temporary pc selection!
+
+	// IF/ID pipeline register & ID stage wire and reg
+	reg[`WORD_SIZE-1:0] pc_id, instr_id;
+
+	// ID/EX pipeline register & EX stage wire and reg
+	reg[`WORD_SIZE-1:0] pc_ex;
+
+	// EX/MEM pipeline register & EX stage wire and reg
+	reg[`WORD_SIZE-1:0] pc_mem;
+
+	// MEM/WB pipeline register & EX stage wire and reg
+	reg[`WORD_SIZE-1:0] pc_wb;
+
+	initial begin
+		pc = 0;
+		pc_id = 0;
+		instr_id = 0;
+		pc_ex = 0;
+		pc_mem = 0;
+		pc_wb = 0;
+	end
+
+
+	always @(posedge clk) begin
+		if (!reset_n) begin
+			pc = 0;
+			pc_id = 0;
+			instr_id = 0;
+			pc_ex = 0;
+			pc_mem = 0;
+			pc_wb = 0;
+		end
+		else begin
+			// update pc
+			pc <= pc_nxt;
+			// update IF/ID pipeline register
+			pc_id <= pc;
+			// update ID/EX pipeline register
+			pc_ex <= pc_id;
+			// update EX/MEM pipeline register
+			pc_mem <= pc_ex;
+			// update MEM/WB pipeline register
+			pc_wb <= pc_mem;
+
+
+			$strobe("pc: %h", pc);
+		end
+	end
+
+	branch_predictor BranchPredictor(
+		.clk(clk),
+		.reset_n(reset_n),
+		.PC(pc),
+		.is_flush(1'b0),
+		.is_BJ_type(1'b0),
+		.actual_next_PC(`WORD_SIZE'b0),
+		.actual_PC(`WORD_SIZE'b0),
+		.next_PC(predicted_pc)
+	);
+
 endmodule
 
