@@ -1,5 +1,5 @@
 `include "opcodes.v"
-`include "register.v" 
+`include "register_file.v"
 `include "alu.v"
 `include "control_unit.v" 
 `include "branch_predictor.v"
