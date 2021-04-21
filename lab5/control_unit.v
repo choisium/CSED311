@@ -110,6 +110,7 @@ module control_unit (opcode, func_code, clk, reset_n, halt, wwd, new_inst, use_r
 				use_rs = 1;
 				alu_src = 1;
 				reg_write = 1;
+				reg_src = 2'b01;
 				new_inst = 1;
 			end
 			`SWD_OP: begin
