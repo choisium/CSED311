@@ -42,25 +42,28 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 
 	// ID/EX pipeline register & EX stage wire and reg
 	reg[`WORD_SIZE-1:0] pc_ex, rf_rs_ex, rf_rt_ex, immed_ex;
-	wire[`WORD_SIZE-1:0] actual_pc;
 	reg[11:0] target;
+	reg[1:0] rd_ex;
 		// control signals
 	reg alu_src_ex, branch_ex, mem_read_ex, mem_write_ex, reg_write_ex, wwd_ex, new_inst_ex;
 	reg[1:0] pc_src_ex, reg_src_ex, alu_branch_type_ex;
 	reg[3:0] alu_func_code_ex;
 		// additional wire and reg
 	wire flush;
-	wire[`WORD_SIZE-1:0] alu_out, pc_branch, alu_operand_B;
+	wire[`WORD_SIZE-1:0] alu_out_ex, pc_branch, alu_operand_B;
 	wire alu_overflow_flag, alu_bcond;
+	wire[`WORD_SIZE-1:0] actual_pc;
 
 	// EX/MEM pipeline register & EX stage wire and reg
-	reg[`WORD_SIZE-1:0] pc_mem, rf_rs_mem;
+	reg[`WORD_SIZE-1:0] pc_mem, rf_rs_mem, alu_out_mem;
+	reg[1:0] rd_mem;
 		// control signals
 	reg mem_read_mem, mem_write_mem, reg_write_mem, wwd_mem, new_inst_mem;
 	reg[1:0] reg_src_mem;
 
 	// MEM/WB pipeline register & EX stage wire and reg
-	reg[`WORD_SIZE-1:0] pc_wb, rf_rs_wb;
+	reg[`WORD_SIZE-1:0] pc_wb, rf_rs_wb, alu_out_wb;
+	reg[1:0] rd_wb;
 		// control signals
 	reg reg_write_wb, wwd_wb, new_inst_wb;
 	reg[1:0] reg_src_wb;
@@ -73,15 +76,16 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		num_inst <= 0;
 		output_port <= 0;
 
-		pc_ex = 0; target <= 0;
+		pc_ex = 0; target <= 0; rd_ex <= 0;
 		alu_src_ex = 0; branch_ex = 0; mem_read_ex = 0; mem_write_ex = 0; reg_write_ex = 0; wwd_ex = 0; new_inst_ex = 0;
 		pc_src_ex = 0; reg_src_ex = 0; alu_branch_type_ex = 0; alu_func_code_ex = 0;
 		rf_rs_ex <= 0; wwd_ex <= 0; new_inst_ex <= 0;
 
-		pc_mem = 0; rf_rs_mem <= 0;
+		pc_mem = 0; rf_rs_mem <= 0; rd_mem <= 0; alu_out_mem <= 0;
 		mem_read_mem <= 0; mem_write_mem <= 0; reg_write_mem <=0; wwd_mem <= 0; new_inst_mem <= 0; reg_src_mem <= 0;
 
-		pc_wb = 0; rf_rs_wb <= 0;
+
+		pc_wb = 0; rf_rs_wb <= 0; rd_wb <= 0; alu_out_wb <= 0;
 		reg_write_wb <= 0; wwd_wb <= 0; new_inst_wb <= 0; reg_src_wb <= 0;
 	end
 
@@ -115,19 +119,20 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		if (!reset_n) begin
 			pc = 0;
 
-			pc_id = 0;
+			pc_id = 0; instr = 0;
 			num_inst <= 0;
 			output_port <= 0;
 
-			pc_ex = 0; target <= 0;
+			pc_ex = 0; target <= 0; rd_ex <= 0;
 			alu_src_ex = 0; branch_ex = 0; mem_read_ex = 0; mem_write_ex = 0; reg_write_ex = 0; wwd_ex = 0; new_inst_ex = 0;
 			pc_src_ex = 0; reg_src_ex = 0; alu_branch_type_ex = 0; alu_func_code_ex = 0;
 			rf_rs_ex <= 0; wwd_ex <= 0; new_inst_ex <= 0;
 
-			pc_mem = 0; rf_rs_mem <= 0;
+			pc_mem = 0; rf_rs_mem <= 0; rd_mem <= 0;
 			mem_read_mem <= 0; mem_write_mem <= 0; reg_write_mem <=0; wwd_mem <= 0; new_inst_mem <= 0; reg_src_mem <= 0;
 
-			pc_wb = 0; rf_rs_wb <= 0;
+
+			pc_wb = 0; rf_rs_wb <= 0; rd_wb <= 0;
 			reg_write_wb <= 0; wwd_wb <= 0; new_inst_wb <= 0; reg_src_wb <= 0;
 		end
 		else begin
@@ -139,18 +144,23 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 
 			// update ID/EX pipeline register
 			pc_ex <= pc_id;
-			target <= instr[11:0]; immed_ex <= immed_id; rf_rs_ex <= rf_rs; rf_rt_ex <= rf_rt;
+			target <= instr[11:0]; immed_ex <= immed_id; rf_rs_ex <= rf_rs; rf_rt_ex <= rf_rt; rd_ex <= instr[7:6];
 			pc_src_ex <= pc_src_id; branch_ex <= branch_id; alu_src_ex <= alu_src_id;
 			wwd_ex <= wwd_id; new_inst_ex <= new_inst_id;
 
 			// update EX/MEM pipeline register
 			pc_mem <= pc_ex;
+			immed_ex <= immed_id;
 			rf_rs_mem <= rf_rs_ex;
+			rd_mem <= rd_ex;
+			alu_out_mem <= alu_out_ex;
 			wwd_mem <= wwd_ex; new_inst_mem <= new_inst_ex;
 
 			// update MEM/WB pipeline register
 			pc_wb <= pc_mem;
 			rf_rs_wb <= rf_rs_wb;
+			rd_wb <= rd_mem;
+			alu_out_wb <= alu_out_mem;
 			wwd_wb <= wwd_mem; new_inst_wb <= new_inst_mem;
 		end
 	end
@@ -205,9 +215,9 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		.reset_n(reset_n),
 		.read1(instr[11:10]),
 		.read2(instr[9:8]),
-		.dest(instr[7:6]),
-		.reg_write(1'b0),
-		.write_data(`WORD_SIZE'b0),
+		.dest(rd_wb),
+		.reg_write(reg_write_wb),
+		.write_data(alu_out_wb),
 		.read_out1(rf_rs),
 		.read_out2(rf_rt)
 	);
@@ -217,7 +227,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		.B(alu_operand_B),
 		.func_code(alu_func_code_ex),
 		.branch_type(alu_branch_type_ex),
-		.alu_out(alu_out),
+		.alu_out(alu_out_ex),
 		.overflow_flag(alu_overflow_flag),
 		.bcond(alu_bcond)
 	);
@@ -230,8 +240,8 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 
 	mux2_1 MUX_branch(
 		.sel(branch_ex & alu_bcond),
-		.i1(pc_ex),
-		.i2(pc_ex),
+		.i1(pc_ex + `WORD_SIZE'b1),
+		.i2(pc_ex + immmed_id),
 		.o(pc_branch)
 	);
 
@@ -239,8 +249,8 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		.sel(pc_src_ex),
 		.i1(pc_branch),
 		.i2({pc_ex[15:12], target}),
-		.i3({pc_ex[15:12], target}),
-		.i4({pc_ex[15:12], target}),
+		.i3(rf_rs_ex),
+		.i4(pc_branch),
 		.o(actual_pc)
 	);
 
