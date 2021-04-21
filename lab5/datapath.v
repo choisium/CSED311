@@ -43,12 +43,12 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	// ID/EX pipeline register & EX stage wire and reg
 	reg[`WORD_SIZE-1:0] pc_ex, rf_rs_ex, rf_rt_ex, immed_ex;
 	wire[`WORD_SIZE-1:0] actual_pc;
+	reg[11:0] target;
 		// control signals
 	reg alu_src_ex, branch_ex, mem_read_ex, mem_write_ex, reg_write_ex, wwd_ex, new_inst_ex;
 	reg[1:0] pc_src_ex, reg_src_ex, alu_branch_type_ex;
 	reg[3:0] alu_func_code_ex;
 		// additional wire and reg
-	reg[11:0] target;
 	wire flush;
 	wire[`WORD_SIZE-1:0] alu_out, pc_branch, alu_operand_B;
 	wire alu_overflow_flag, alu_bcond;
@@ -67,29 +67,32 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 
 
 	initial begin
-		pc = 0; pc_id = 0; pc_ex = 0; pc_mem = 0; pc_wb = 0;
-		instr = 0;
+		pc = 0;
+
+		pc_id = 0; instr = 0;
 		num_inst <= 0;
 		output_port <= 0;
 
-		instr = 0;
-		target <= 0;
+		pc_ex = 0; target <= 0;
 		alu_src_ex = 0; branch_ex = 0; mem_read_ex = 0; mem_write_ex = 0; reg_write_ex = 0; wwd_ex = 0; new_inst_ex = 0;
-		pc_src_ex = 0; reg_src_ex = 0; alu_branch_type_ex = 0;
-		alu_func_code_ex = 0;
+		pc_src_ex = 0; reg_src_ex = 0; alu_branch_type_ex = 0; alu_func_code_ex = 0;
 		rf_rs_ex <= 0; wwd_ex <= 0; new_inst_ex <= 0;
 
-		rf_rs_mem <= 0; wwd_mem <= 0; new_inst_mem <= 0;
-		rf_rs_wb <= 0; wwd_wb <= 0; new_inst_wb <= 0;
+		pc_mem = 0; rf_rs_mem <= 0;
+		mem_read_mem <= 0; mem_write_mem <= 0; reg_write_mem <=0; wwd_mem <= 0; new_inst_mem <= 0; reg_src_mem <= 0;
+
+		pc_wb = 0; rf_rs_wb <= 0;
+		reg_write_wb <= 0; wwd_wb <= 0; new_inst_wb <= 0; reg_src_wb <= 0;
 	end
 
+
+	// get memory data
 	assign read_m1 = 1;
 	assign address1 = pc;
 	assign write_m2 = 0;
 	assign read_m2 = 0;
 	assign address2 = 0;
 
-	// get memory data
 	always @(posedge clk) begin
 		if (!reset_n) begin
 			instr <= 0;
@@ -99,6 +102,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		end
 	end
 
+	// set flush
 	assign flush = actual_pc != pc_ex? 1: 0;
 	always @(*) begin
 		$strobe("pc: %h, pc_id: %h, pc_ex: %h, pc_mem: %h, pc_wb: %h", pc, pc_id, pc_ex, pc_mem, pc_wb);
@@ -109,15 +113,22 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	always @(posedge clk) begin
 		$strobe("--- clk posedge --- pc: %h, pc_nxt: %h", pc, pc_nxt);
 		if (!reset_n) begin
-			pc <= 0;
-			pc_id <= 0;
-			pc_ex <= 0;
-			target <= 0;
-			pc_src_ex <= 0; rf_rs_ex <= 0; rf_rt_ex <= 0; branch_ex <= 0; wwd_ex <= 0; new_inst_ex <= 0;
-			pc_mem <= 0;
-			rf_rs_mem <= 0; wwd_mem <= 0; new_inst_mem <= 0;
-			pc_wb <= 0;
-			rf_rs_wb <= 0; wwd_wb <= 0; new_inst_wb <= 0;
+			pc = 0;
+
+			pc_id = 0;
+			num_inst <= 0;
+			output_port <= 0;
+
+			pc_ex = 0; target <= 0;
+			alu_src_ex = 0; branch_ex = 0; mem_read_ex = 0; mem_write_ex = 0; reg_write_ex = 0; wwd_ex = 0; new_inst_ex = 0;
+			pc_src_ex = 0; reg_src_ex = 0; alu_branch_type_ex = 0; alu_func_code_ex = 0;
+			rf_rs_ex <= 0; wwd_ex <= 0; new_inst_ex <= 0;
+
+			pc_mem = 0; rf_rs_mem <= 0;
+			mem_read_mem <= 0; mem_write_mem <= 0; reg_write_mem <=0; wwd_mem <= 0; new_inst_mem <= 0; reg_src_mem <= 0;
+
+			pc_wb = 0; rf_rs_wb <= 0;
+			reg_write_wb <= 0; wwd_wb <= 0; new_inst_wb <= 0; reg_src_wb <= 0;
 		end
 		else begin
 			// update pc
