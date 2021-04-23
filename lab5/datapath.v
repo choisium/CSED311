@@ -33,60 +33,82 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 
 	// IF/ID pipeline register & ID stage wire and reg
 	reg[`WORD_SIZE-1:0] pc_id, instr;
-		// control signals
-	wire halt, use_rs, use_rt, alu_src_id, branch_id, mem_read_id, mem_write_id, reg_write_id, wwd_id, new_inst_id;
-	wire[1:0] pc_src_id, reg_dest, reg_src_id, alu_branch_type_id;
-	wire[3:0] alu_func_code_id;
-		// additional wire and reg
+		
+	// IF/ID control signals
+	wire halt, use_rs, use_rt; wire[1:0] reg_dest;
+	wire alu_src_id, branch_id; wire[1:0] pc_src_id, alu_branch_type_id; wire[3:0] alu_func_code_id; // to EX
+	wire mem_read_id, mem_write_id; // to MEM
+	wire reg_write_id, wwd_id, new_inst_id; wire[1:0] reg_src_id; // to MEM
+		
+	// ID additional wire and reg
 	wire[`WORD_SIZE-1:0] rf_rs, rf_rt, immed_id;
+	wire[1:0] rd_id;
 
 	// ID/EX pipeline register & EX stage wire and reg
 	reg[`WORD_SIZE-1:0] pc_ex, rf_rs_ex, rf_rt_ex, immed_ex;
 	reg[11:0] target;
-	reg[1:0] rd_ex;
-		// control signals
-	reg alu_src_ex, branch_ex, mem_read_ex, mem_write_ex, reg_write_ex, wwd_ex, new_inst_ex;
-	reg[1:0] pc_src_ex, reg_src_ex, alu_branch_type_ex;
-	reg[3:0] alu_func_code_ex;
-		// additional wire and reg
+	reg[1:0] rs_ex, rt_ex, rd_ex;
+
+	// ID/EX pipeline control signals
+	reg alu_src_ex, branch_ex; reg[1:0] pc_src_ex, alu_branch_type_ex; reg[3:0] alu_func_code_ex; // to EX
+	reg mem_read_ex, mem_write_ex; // to MEM
+	reg wwd_ex, new_inst_ex, reg_write_ex; reg[1:0] reg_src_ex; // to WB
+		
+	// EX additional wire and reg
 	wire flush;
 	wire[`WORD_SIZE-1:0] alu_out_ex, pc_branch, alu_operand_B;
 	wire alu_overflow_flag, alu_bcond;
 	wire[`WORD_SIZE-1:0] actual_pc;
 
 	// EX/MEM pipeline register & EX stage wire and reg
-	reg[`WORD_SIZE-1:0] pc_mem, rf_rs_mem, alu_out_mem;
+	reg[`WORD_SIZE-1:0] pc_mem, rf_rs_mem, rf_rt_mem, alu_out_mem;
 	reg[1:0] rd_mem;
-		// control signals
-	reg mem_read_mem, mem_write_mem, reg_write_mem, wwd_mem, new_inst_mem;
-	reg[1:0] reg_src_mem;
+		
+	// EX/MEM control signals
+	reg mem_read_mem, mem_write_mem; // to EX
+	reg wwd_mem, new_inst_mem, reg_write_mem; reg[1:0] reg_src_mem; // to MEM
 
 	// MEM/WB pipeline register & EX stage wire and reg
 	reg[`WORD_SIZE-1:0] pc_wb, rf_rs_wb, alu_out_wb;
 	reg[1:0] rd_wb;
-		// control signals
-	reg reg_write_wb, wwd_wb, new_inst_wb;
-	reg[1:0] reg_src_wb;
+	
+	// MEM/WB control signals
+	reg wwd_wb, new_inst_wb, reg_write_wb; reg[1:0] reg_src_wb;
+
+	// WB additional wire and reg
+	wire[`WORD_SIZE-1:0] write_data_wb;
 
 
 	initial begin
-		pc = 0;
+		pc <= 0;
+		num_inst <= 0; output_port <= 0;
 
-		pc_id = 0; instr = 0;
-		num_inst <= 0;
-		output_port <= 0;
+		// IF/ID pipeline
+		pc_id <= 0; instr <= 0;
 
-		pc_ex = 0; target <= 0; rd_ex <= 0;
-		alu_src_ex = 0; branch_ex = 0; mem_read_ex = 0; mem_write_ex = 0; reg_write_ex = 0; wwd_ex = 0; new_inst_ex = 0;
-		pc_src_ex = 0; reg_src_ex = 0; alu_branch_type_ex = 0; alu_func_code_ex = 0;
-		rf_rs_ex <= 0; wwd_ex <= 0; new_inst_ex <= 0;
+		// ID/EX pipeline register
+		target <= 0; pc_ex <= 0; rf_rs_ex <= 0; rf_rt_ex <= 0;  immed_ex <= 0;
+		rs_ex <= 0; rt_ex <= 0; rd_ex <= 0;
+		
+		// EX control
+		alu_src_ex <= 0; branch_ex <= 0; pc_src_ex <= 0; alu_branch_type_ex <= 0; alu_func_code_ex <= 0;
+		mem_read_ex <= 0; mem_write_ex <= 0; 
+		wwd_ex <= 0; new_inst_ex <= 0; reg_write_ex <= 0; reg_src_ex <= 0; 
 
-		pc_mem = 0; rf_rs_mem <= 0; rd_mem <= 0; alu_out_mem <= 0;
-		mem_read_mem <= 0; mem_write_mem <= 0; reg_write_mem <=0; wwd_mem <= 0; new_inst_mem <= 0; reg_src_mem <= 0;
+		// EX/MEM pipeline register
+		pc_mem <= 0; rf_rs_mem <= 0; rf_rt_mem <= 0; alu_out_mem <= 0; 
+		rd_mem <= 0; 
+		
+		// EX/MEM control signals
+		mem_read_mem <= 0; mem_write_mem <= 0; 
+		wwd_mem <= 0; new_inst_mem <= 0; reg_write_mem <=0; reg_src_mem <= 0;
 
+		// MEM/WB control signals
+		pc_wb <= 0; rf_rs_wb <= 0; alu_out_wb <= 0;
+		rd_wb <= 0;
 
-		pc_wb = 0; rf_rs_wb <= 0; rd_wb <= 0; alu_out_wb <= 0;
-		reg_write_wb <= 0; wwd_wb <= 0; new_inst_wb <= 0; reg_src_wb <= 0;
+		// MEM/WB control signals
+		wwd_wb <= 0; new_inst_wb <= 0; reg_write_wb <= 0; reg_src_wb <= 0;
 	end
 
 
@@ -117,62 +139,78 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	always @(posedge clk) begin
 		$strobe("--- clk posedge --- pc: %h, pc_nxt: %h", pc, pc_nxt);
 		if (!reset_n) begin
-			pc = 0;
+			pc <= 0;
+			num_inst <= 0; output_port <= 0;
 
-			pc_id = 0; instr = 0;
-			num_inst <= 0;
-			output_port <= 0;
+			// IF/ID pipeline
+			pc_id <= 0; instr <= 0;
 
-			pc_ex = 0; target <= 0; rd_ex <= 0;
-			alu_src_ex = 0; branch_ex = 0; mem_read_ex = 0; mem_write_ex = 0; reg_write_ex = 0; wwd_ex = 0; new_inst_ex = 0;
-			pc_src_ex = 0; reg_src_ex = 0; alu_branch_type_ex = 0; alu_func_code_ex = 0;
-			rf_rs_ex <= 0; wwd_ex <= 0; new_inst_ex <= 0;
+			// ID/EX pipeline register
+			target <= 0; pc_ex <= 0; rf_rs_ex <= 0; rf_rt_ex <= 0;  immed_ex <= 0;
+			rs_ex <= 0; rt_ex <= 0; rd_ex <= 0;
+			
+			// EX control
+			alu_src_ex <= 0; branch_ex <= 0; pc_src_ex <= 0; alu_branch_type_ex <= 0; alu_func_code_ex <= 0;
+			mem_read_ex <= 0; mem_write_ex <= 0; 
+			wwd_ex <= 0; new_inst_ex <= 0; reg_write_ex <= 0; reg_src_ex <= 0; 
 
-			pc_mem = 0; rf_rs_mem <= 0; rd_mem <= 0;
-			mem_read_mem <= 0; mem_write_mem <= 0; reg_write_mem <=0; wwd_mem <= 0; new_inst_mem <= 0; reg_src_mem <= 0;
+			// EX/MEM pipeline register
+			pc_mem <= 0; rf_rs_mem <= 0; rf_rt_mem <= 0; alu_out_mem <= 0; 
+			rd_mem <= 0; 
+			
+			// EX/MEM control signals
+			mem_read_mem <= 0; mem_write_mem <= 0; 
+			wwd_mem <= 0; new_inst_mem <= 0; reg_write_mem <=0; reg_src_mem <= 0;
 
+			// MEM/WB control signals
+			pc_wb <= 0; rf_rs_wb <= 0; alu_out_wb <= 0;
+			rd_wb <= 0;
 
-			pc_wb = 0; rf_rs_wb <= 0; rd_wb <= 0;
-			reg_write_wb <= 0; wwd_wb <= 0; new_inst_wb <= 0; reg_src_wb <= 0;
+			// MEM/WB control signals
+			wwd_wb <= 0; new_inst_wb <= 0; reg_write_wb <= 0; reg_src_wb <= 0;
 		end
 		else begin
 			// update pc
 			pc <= pc_nxt;
 
-			// update IF/ID pipeline register
+			// update IF/ID pipeline register (instr from data)
 			pc_id <= pc;
 
 			// update ID/EX pipeline register
-			pc_ex <= pc_id;
-			target <= instr[11:0]; immed_ex <= immed_id; rf_rs_ex <= rf_rs; rf_rt_ex <= rf_rt; rd_ex <= instr[7:6];
-			pc_src_ex <= pc_src_id; branch_ex <= branch_id; alu_src_ex <= alu_src_id;
-			wwd_ex <= wwd_id; new_inst_ex <= new_inst_id;
-
+			target <= instr[11:0]; pc_ex <= pc_id; rf_rs_ex <= rf_rs; rf_rt_ex <= rf_rt; immed_ex <= immed_id;
+			rs_ex <= instr[11:10]; rt_ex <= instr[9:8]; rd_ex <= rd_id;
+			
+			// update EX control
+			alu_src_ex <= alu_src_id; branch_ex <= branch_id; pc_src_ex <= pc_src_id; 
+			alu_branch_type_ex <= alu_branch_type_id; alu_func_code_ex <= alu_func_code_id;
+			mem_read_ex <= mem_read_id; mem_write_ex <= mem_write_id; 
+			wwd_ex <= wwd_id; new_inst_ex <= new_inst_id; reg_write_ex <= reg_write_id; reg_src_ex <= reg_src_id; 
+			
 			// update EX/MEM pipeline register
-			pc_mem <= pc_ex;
-			immed_ex <= immed_id;
-			rf_rs_mem <= rf_rs_ex;
-			rd_mem <= rd_ex;
-			alu_out_mem <= alu_out_ex;
-			wwd_mem <= wwd_ex; new_inst_mem <= new_inst_ex;
+			pc_mem <= pc_ex; rf_rs_mem <= rf_rs_ex; rf_rt_mem <= rf_rt_ex; alu_out_mem <= alu_out_ex; 
+			rd_mem <= rd_ex; 
 
-			// update MEM/WB pipeline register
-			pc_wb <= pc_mem;
-			rf_rs_wb <= rf_rs_wb;
+			// update EX/MEM control signals
+			mem_read_mem <= mem_read_ex; mem_write_mem <= mem_write_ex; 
+			wwd_mem <= wwd_ex; new_inst_mem <= new_inst_ex; reg_write_mem <= reg_write_ex; reg_src_mem <= reg_src_ex;
+
+			// update MEM/WB control signals
+			pc_wb <= pc_mem; rf_rs_wb <= rf_rs_mem; alu_out_wb <= alu_out_mem;
 			rd_wb <= rd_mem;
-			alu_out_wb <= alu_out_mem;
-			wwd_wb <= wwd_mem; new_inst_wb <= new_inst_mem;
+
+			// update MEM/WB control signals
+			wwd_wb <= wwd_mem; new_inst_wb <= new_inst_mem; reg_write_wb <= reg_write_mem; reg_src_wb <= reg_src_mem;
 		end
 	end
 
 	always @(posedge clk) begin
 		if (wwd_wb) begin
-			$display("rf_rs: %h, wwd_wb: %b, output_port: %h", rf_rs_wb, wwd_wb, output_port);
+			$strobe("rf_rs: %h, wwd_wb: %b, output_port: %h", rf_rs_wb, wwd_wb, output_port);
 			output_port <= rf_rs_wb;
 		end
 
 		if (new_inst_wb) begin
-			$display("new inst finished!");
+			$strobe("new inst finished!");
 			num_inst <= num_inst + 1;
 		end
 	end
@@ -217,7 +255,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		.read2(instr[9:8]),
 		.dest(rd_wb),
 		.reg_write(reg_write_wb),
-		.write_data(alu_out_wb),
+		.write_data(write_data_wb),
 		.read_out1(rf_rs),
 		.read_out2(rf_rt)
 	);
@@ -261,6 +299,23 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		.o(alu_operand_B)
 	);
 
+	mux4_1 #(.DATA_WIDTH(2)) MUX_reg_dest(
+		.sel(reg_dest),
+		.i1(instr[7:6]),
+		.i2(instr[9:8]),
+		.i3(2'b10),
+		.i4(instr[7:6]),
+		.o(rd_id)
+	);
+
+	mux4_1 MUX_reg_src(
+		.sel(reg_src_wb),
+		.i1(alu_out_wb),
+		.i2(alu_out_wb),
+		.i3(pc_wb),
+		.i4(alu_out_wb),
+		.o(write_data_wb)
+	);
 
 endmodule
 
