@@ -165,6 +165,7 @@ module control_unit (opcode, func_code, clk, reset_n, halt, wwd, new_inst, use_r
 			`ADI_OP: alu_func_code = `FUNC_ADD;
 			`ORI_OP: alu_func_code = `FUNC_ORR;
 			`LHI_OP: alu_func_code = `FUNC_ID2; // immediate : alu_input_2
+			`LWD_OP, `SWD_OP: alu_func_code = `FUNC_ADD;
 			`BNE_OP, `BEQ_OP ,`BGZ_OP, `BLZ_OP: begin
 				alu_func_code = `FUNC_Bxx;
 				alu_branch_type = opcode[1:0]; //branch type for bne = 0, beq = 1, bgz = 2, blz = 3
