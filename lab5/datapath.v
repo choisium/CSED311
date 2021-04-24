@@ -211,7 +211,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 				wwd_ex <= wwd_id; new_inst_ex <= new_inst_id; reg_write_ex <= reg_write_id; reg_src_ex <= reg_src_id; 
 			end else begin
 				alu_src_ex <= 0; branch_ex <= 0; pc_src_ex <= 0; 
-				alu_branch_type_ex <= 0; alu_func_code_ex <= 0;
+				alu_branch_type_ex <= 0; alu_func_code_ex <= 4'd15;
 				mem_read_ex <= 0; mem_write_ex <= 0; 
 				wwd_ex <= 0; new_inst_ex <= 0; reg_write_ex <= 0; reg_src_ex <= 0; 
 			end

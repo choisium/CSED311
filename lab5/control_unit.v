@@ -95,13 +95,15 @@ module control_unit (opcode, func_code, clk, reset_n, halt, wwd, new_inst, use_r
 				endcase
 			end
 			`ADI_OP, `ORI_OP: begin
+				reg_dest = 2'b01;
 				use_rs = 1;
-				use_rt = 1;
+				alu_src = 1;
 				reg_write = 1;
 				new_inst = 1;
 			end
 			`LHI_OP: begin
-				use_rs = 1;
+				reg_dest = 2'b01;
+				alu_src = 1;
 				reg_write = 1;
 				new_inst = 1;
 			end
@@ -109,6 +111,7 @@ module control_unit (opcode, func_code, clk, reset_n, halt, wwd, new_inst, use_r
 				reg_dest = 2'b01;
 				use_rs = 1;
 				alu_src = 1;
+				mem_read = 1;
 				reg_write = 1;
 				reg_src = 2'b01;
 				new_inst = 1;
