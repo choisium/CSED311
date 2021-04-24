@@ -72,13 +72,13 @@ module control_unit (opcode, func_code, clk, reset_n, halt, wwd, new_inst, use_r
 					end
 					`INST_FUNC_JPR: begin
 						use_rs = 1;
-						pc_src = 2'b11;
+						pc_src = 2'b10;
 						new_inst = 1;
 					end
 					`INST_FUNC_JRL: begin
 						reg_dest = 2'b10;
 						use_rs = 1;
-						pc_src = 2'b11;
+						pc_src = 2'b10;
 						reg_write = 1;
 						reg_src = 2'b10;
 						new_inst = 1;
@@ -123,22 +123,22 @@ module control_unit (opcode, func_code, clk, reset_n, halt, wwd, new_inst, use_r
 				use_rs = 1;
 				use_rt = 1;
 				branch = 1;
-				pc_src = 2'b01;
+				pc_src = 2'b00;
 				new_inst = 1;
 			end
 			`BGZ_OP, `BLZ_OP: begin
 				use_rs = 1;
 				branch = 1;
-				pc_src = 2'b01;
+				pc_src = 2'b00;
 				new_inst = 1;
 			end
 			`JMP_OP: begin
-				pc_src = 2'b10;
+				pc_src = 2'b01;
 				new_inst = 1;
 			end
 			`JAL_OP: begin
 				reg_dest = 2'b10;
-				pc_src = 2'b10;
+				pc_src = 2'b01;
 				reg_write = 1;
 				reg_src = 2'b10;
 				new_inst = 1;
