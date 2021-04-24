@@ -25,7 +25,7 @@ module register_file (read_out1, read_out2, read1, read2, dest, write_data, reg_
     assign read_out1 = RF[read1];
     assign read_out2 = RF[read2];
 
-    always @(posedge clk) begin
+    always @(negedge clk) begin
 		if (!reset_n) begin
 			RF[0] = `WORD_SIZE'b0;
 			RF[1] = `WORD_SIZE'b0;

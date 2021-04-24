@@ -6,6 +6,7 @@
 `include "hazard.v"
 `include "util.v"
 `include "immediate_generator.v"
+`include "forwarding_unit.v"
 
 module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, address2, data2, num_inst, output_port, is_halted);
 
@@ -42,7 +43,8 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	wire alu_src_id, branch_id; wire[1:0] pc_src_id, alu_branch_type_id; wire[3:0] alu_func_code_id; // to EX
 	wire mem_read_id, mem_write_id; // to MEM
 	wire reg_write_id, wwd_id; wire[1:0] reg_src_id; reg new_inst_id; // to MEM
-		
+	wire is_stall;
+
 	// ID additional wire and reg
 	wire[`WORD_SIZE-1:0] rf_rs, rf_rt, immed_id;
 	wire[1:0] rd_id;
@@ -59,9 +61,10 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		
 	// EX additional wire and reg
 	reg flush;
-	wire[`WORD_SIZE-1:0] alu_out_ex, pc_branch, alu_operand_B;
+	wire[`WORD_SIZE-1:0] alu_out_ex, pc_branch, rf_rs_forwarded, rf_rt_forwarded, alu_operand_B;
 	wire alu_overflow_flag, alu_bcond;
 	wire[`WORD_SIZE-1:0] actual_pc;
+	wire [1:0] forward_a, forward_b;
 
 	// EX/MEM pipeline register & EX stage wire and reg
 	reg[`WORD_SIZE-1:0] pc_mem, rf_rs_mem, rf_rt_mem, alu_out_mem;
@@ -126,6 +129,8 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	always @(posedge clk) begin
 		if (!reset_n) begin
 			instr <= 0;
+		end else if(is_stall) begin 
+			instr <= instr;
 		end
 		else begin
 			instr <= data1;
@@ -182,13 +187,21 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		end
 		else begin
 			// update pc
-			pc <= pc_nxt;
+			
+			if(is_stall) begin
+				pc <= pc;
+			end else begin
+				pc <= pc_nxt;
+			end
 
 			// update IF/ID pipeline register (instr from data)
 			if(!flush) begin
 				pc_id <= pc;
 				new_inst_id <= new_inst_if;
-			end else begin
+			end else if(is_stall) begin
+				pc_id <= pc_id;
+				new_inst_id <= new_inst_id;
+			end	else begin
 				pc_id <= ~0;
 				new_inst_id <= 0;
 			end
@@ -197,6 +210,9 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 			if(!flush) begin
 				target <= instr[11:0]; pc_ex <= pc_id; rf_rs_ex <= rf_rs; rf_rt_ex <= rf_rt; immed_ex <= immed_id;
 				rs_ex <= instr[11:10]; rt_ex <= instr[9:8]; rd_ex <= rd_id;
+			end else if(is_stall) begin
+				target <= target; pc_ex <= pc_ex; rf_rs_ex <= rf_rs_ex; rf_rt_ex <= rf_rt_ex; immed_ex <= immed_ex;
+				rs_ex <= rs_ex; rt_ex <= rt_ex; rd_ex <= rd_ex;
 			end else begin
 				pc_ex <= ~0;
 				target <= 0; rf_rs_ex <= 0; rf_rt_ex <= 0; immed_ex <= 0;
@@ -209,6 +225,11 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 				alu_branch_type_ex <= alu_branch_type_id; alu_func_code_ex <= alu_func_code_id;
 				mem_read_ex <= mem_read_id; mem_write_ex <= mem_write_id; 
 				wwd_ex <= wwd_id; new_inst_ex <= new_inst_id; reg_write_ex <= reg_write_id; reg_src_ex <= reg_src_id; 
+			end else if(is_stall) begin
+				alu_src_ex <= alu_src_ex; branch_ex <= branch_ex; pc_src_ex <= pc_src_ex; 
+				alu_branch_type_ex <= alu_branch_type_ex; alu_func_code_ex <= alu_func_code_ex;
+				mem_read_ex <= mem_read_ex; mem_write_ex <= mem_write_ex; 
+				wwd_ex <= wwd_ex; new_inst_ex <= new_inst_ex; reg_write_ex <= reg_write_ex; reg_src_ex <= reg_src_ex; 
 			end else begin
 				alu_src_ex <= 0; branch_ex <= 0; pc_src_ex <= 0; 
 				alu_branch_type_ex <= 0; alu_func_code_ex <= 4'd15;
@@ -217,7 +238,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 			end
 
 			// update EX/MEM pipeline register
-			pc_mem <= pc_ex; rf_rs_mem <= rf_rs_ex; rf_rt_mem <= rf_rt_ex; alu_out_mem <= alu_out_ex; 
+			pc_mem <= pc_ex; rf_rs_mem <= rf_rs_forwarded; rf_rt_mem <= rf_rt_ex; alu_out_mem <= alu_out_ex; 
 			rd_mem <= rd_ex; 
 
 			// update EX/MEM control signals
@@ -291,7 +312,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	);
 
 	alu ALU(
-		.A(rf_rs_ex),
+		.A(rf_rs_forwarded),
 		.B(alu_operand_B),
 		.func_code(alu_func_code_ex),
 		.branch_type(alu_branch_type_ex),
@@ -324,7 +345,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 
 	mux2_1 MUX_alu_src(
 		.sel(alu_src_ex),
-		.i1(rf_rt_ex),
+		.i1(rf_rt_forwarded),
 		.i2(immed_ex),
 		.o(alu_operand_B)
 	);
@@ -346,6 +367,59 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		.i4(alu_out_wb),
 		.o(write_data_wb)
 	);
+
+	hazard_detect HazardDetectionUnit(
+		.IFID_IR(instr),
+		.IDEX_rd(rd_ex),
+		.use_rs(use_rs),
+		.use_rt(use_rt),
+		.IDEX_M_mem_read(mem_read_ex),
+		.is_stall(is_stall)
+	);
+
+	forwarding_unit ForwardingUnit(
+		.rs_EX(rs_ex),
+		.rt_EX(rt_ex),
+		.rd_MEM(rd_mem),
+		.reg_write_MEM(reg_write_mem),
+		.rd_WB(rd_wb),
+		.reg_write_WB(reg_write_wb),
+		.forward_A(forward_a),
+		.forward_B(forward_b)
+	);
+
+	mux4_1 MUX_forwarding_a(
+		.sel(forward_a),
+		.i1(rf_rs_ex),
+		.i2(alu_out_mem),
+		.i3(write_data_wb),
+		.i4(rf_rs_ex),
+		.o(rf_rs_forwarded)
+	);
+
+	mux4_1 MUX_forwarding_b(
+		.sel(forward_b),
+		.i1(rf_rt_ex),
+		.i2(alu_out_mem),
+		.i3(write_data_wb),
+		.i4(rf_rt_ex),
+		.o(rf_rt_forwarded)
+	);
+
+/* 	hazard_detect HazardDetectionUnit(
+		.ID_rs(instr[11:10]),
+		.ID_rt(instr[9:8]),
+		.EX_rd(rd_ex),
+		.MEM_rd(rd_mem),
+		.WB_rd(rd_wb),
+		.EX_regwrite(reg_write_ex),
+		.MEM_regwrite(reg_write_mem),
+		.WB_regwrite(reg_write_wb),
+		.use_rs(use_rs),
+		.use_rt(use_rt),
+		.IDEX_M_mem_read(1'b0),
+		.is_stall(is_stall)
+	); */
 
 endmodule
 
