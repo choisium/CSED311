@@ -60,7 +60,6 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	reg wwd_ex, new_inst_ex, reg_write_ex; reg[1:0] reg_src_ex; // to WB
 		
 	// EX additional wire and reg
-	reg flush;
 	wire[`WORD_SIZE-1:0] alu_out_ex, pc_branch, rf_rs_forwarded, rf_rt_forwarded, alu_operand_B;
 	wire alu_overflow_flag, alu_bcond;
 	wire[`WORD_SIZE-1:0] actual_pc;
@@ -74,6 +73,9 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	reg mem_read_mem, mem_write_mem; // to EX
 	reg wwd_mem, new_inst_mem, reg_write_mem; reg[1:0] reg_src_mem; // to MEM
 
+	// MEM additional wire and reg
+	reg[`WORD_SIZE-1:0] mem_write_data, mem_read_data;
+
 	// MEM/WB pipeline register & EX stage wire and reg
 	reg[`WORD_SIZE-1:0] pc_wb, rf_rs_wb, alu_out_wb;
 	reg[1:0] rd_wb;
@@ -84,6 +86,9 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	// WB additional wire and reg
 	wire[`WORD_SIZE-1:0] write_data_wb;
 
+	// flush
+	reg fcond1, fcond2, fcond3;
+	reg flush;
 
 	initial begin
 		pc <= 0;
@@ -122,10 +127,12 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	// get memory data
 	assign read_m1 = 1;
 	assign address1 = pc;
-	assign write_m2 = 0;
-	assign read_m2 = 0;
-	assign address2 = 0;
+	assign write_m2 = mem_write_mem;
+	assign read_m2 = mem_read_mem;
+	assign address2 = alu_out_mem;
+	assign data2 = read_m2? `WORD_SIZE'bz: mem_write_data;
 
+	// instruction memory
 	always @(posedge clk) begin
 		if (!reset_n) begin
 			instr <= 0;
@@ -137,7 +144,19 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		end
 	end
 
-	reg fcond1, fcond2, fcond3;
+	// data memory
+	always @(posedge clk ) begin
+		if (!reset_n) begin
+			mem_read_data <= 0;
+			mem_write_data <= 0;
+		end else begin
+			if(read_m2) begin
+				mem_read_data <= data2;
+			end
+			mem_write_data <= rf_rt_mem;
+		end
+	end
+
 
 	// set flush
 	always @(*) begin
@@ -362,7 +381,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	mux4_1 MUX_reg_src(
 		.sel(reg_src_wb),
 		.i1(alu_out_wb),
-		.i2(alu_out_wb),
+		.i2(mem_read_data),
 		.i3(pc_wb),
 		.i4(alu_out_wb),
 		.o(write_data_wb)
