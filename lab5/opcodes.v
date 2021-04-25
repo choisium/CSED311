@@ -21,7 +21,7 @@
 `define	FUNC_ADD	4'b0000
 `define	FUNC_SUB	4'b0001
 `define	FUNC_AND	4'b0010
-`define	FUNC_ORR	4'b0101
+`define	FUNC_ORR	4'b0011
 `define	FUNC_NOT	4'b0100
 `define	FUNC_TCP	4'b0101
 `define	FUNC_SHL	4'b0110
