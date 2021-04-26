@@ -346,7 +346,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		.sel(pc_src_ex),
 		.i1(pc_branch),
 		.i2({pc_ex[15:12], target}),
-		.i3(rf_rs_ex),
+		.i3(rf_rs_forwarded),
 		.i4(pc_branch),
 		.o(actual_pc)
 	);
@@ -371,7 +371,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		.sel(reg_src_wb),
 		.i1(alu_out_wb),
 		.i2(mem_read_data),
-		.i3(pc_wb),
+		.i3(pc_wb + `WORD_SIZE'b1),
 		.i4(alu_out_wb),
 		.o(write_data_wb)
 	);
