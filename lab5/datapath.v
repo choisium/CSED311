@@ -233,7 +233,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 			end
 			
 			// update EX control
-			if(!flush && !stall) begin
+			if(!flush && !stall && pc_id != `WORD_SIZE'hffff) begin
 				alu_src_ex <= alu_src_id; branch_ex <= branch_id; pc_src_ex <= pc_src_id; 
 				alu_branch_type_ex <= alu_branch_type_id; alu_func_code_ex <= alu_func_code_id;
 				mem_read_ex <= mem_read_id; mem_write_ex <= mem_write_id; 
@@ -338,7 +338,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	mux2_1 MUX_branch(
 		.sel(branch_ex & alu_bcond),
 		.i1(pc_ex + `WORD_SIZE'b1),
-		.i2(pc_ex + immmed_id),
+		.i2(pc_ex + `WORD_SIZE'b1 + immed_ex),
 		.o(pc_branch)
 	);
 
