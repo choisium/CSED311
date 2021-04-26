@@ -90,6 +90,9 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	reg fcond1, fcond2, fcond3;
 	reg flush;
 
+	// halt
+	reg halt;
+
 	initial begin
 		pc <= 0;
 		num_inst <= 0; output_port <= 0;
@@ -121,6 +124,9 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 
 		// MEM/WB control signals
 		halt_wb <= 0; wwd_wb <= 0; new_inst_wb <= 0; reg_write_wb <= 0; reg_src_wb <= 0;
+
+		// halt
+		halt <= 0;
 	end
 
 
@@ -166,7 +172,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	end
 	
 	// set halt
-	assign is_halted = halt_wb;
+	assign is_halted = halt;
 
 	// update pipeline register
 	always @(posedge clk) begin
@@ -204,6 +210,9 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 
 			// MEM/WB control signals
 			halt_wb <= 0; wwd_wb <= 0; new_inst_wb <= 0; reg_write_wb <= 0; reg_src_wb <= 0;
+
+			// halt
+			halt <= 0;
 		end
 		else begin
 			// update pc
@@ -262,6 +271,9 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 
 			// update MEM/WB control signals
 			halt_wb <= halt_mem; wwd_wb <= wwd_mem; new_inst_wb <= new_inst_mem; reg_write_wb <= reg_write_mem; reg_src_wb <= reg_src_mem;
+
+			// halt
+			halt <= halt_wb;
 		end
 	end
 
