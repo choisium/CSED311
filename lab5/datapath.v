@@ -53,6 +53,8 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	reg[`WORD_SIZE-1:0] pc_ex, rf_rs_ex, rf_rt_ex, immed_ex;
 	reg[11:0] target;
 	reg[1:0] rs_ex, rt_ex, rd_ex;
+	
+	wire [`WORD_SIZE-1:0] actual_taken_pc; // for always taken predictor
 
 	// ID/EX pipeline control signals
 	reg alu_src_ex, branch_ex; reg[1:0] pc_src_ex, alu_branch_type_ex; reg[3:0] alu_func_code_ex; // to EX
@@ -161,7 +163,6 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		end
 	end
 
-
 	// set flush
 	always @(*) begin
 		fcond1 = (actual_pc != pc_id);
@@ -173,6 +174,9 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	
 	// set halt
 	assign is_halted = halt;
+
+	// get branch always taken pc
+	assign actual_taken_pc = branch_ex ? (pc_ex + `WORD_SIZE'b1 + immed_ex) : (pc_src_ex == 2'b01 ? {pc_ex[15:12], target} : rf_rs_forwarded);
 
 	// update pipeline register
 	always @(posedge clk) begin
@@ -289,16 +293,40 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		end
 	end
 
-	branch_predictor BranchPredictor(
+	// choose one of branch predictors
+	// branch_predictor_always_not_taken BranchPredictor(
+	// 	.clk(clk),
+	// 	.reset_n(reset_n),
+	// 	.PC(pc),
+	// 	.is_flush(flush),
+	// 	.is_BJ_type(1'b0),
+	// 	.actual_next_PC(actual_pc),
+	// 	.actual_PC(pc_ex),
+	// 	.next_PC(pc_nxt)
+	// );
+
+	branch_predictor_always_taken BranchPredictor(
 		.clk(clk),
 		.reset_n(reset_n),
 		.PC(pc),
 		.is_flush(flush),
-		.is_BJ_type(1'b0),
-		.actual_next_PC(`WORD_SIZE'b0),
-		.actual_PC(actual_pc),
+		.is_BJ_type(branch_ex || (pc_src_ex != 2'b0)),
+		.actual_taken_PC(actual_taken_pc),
+		.actual_next_PC(actual_pc),
+		.actual_PC(pc_ex),
 		.next_PC(pc_nxt)
 	);
+
+	// branch_predictor_global_predictor BranchPredictor(
+	// 	.clk(clk),
+	// 	.reset_n(reset_n),
+	// 	.PC(pc),
+	// 	.is_flush(flush),
+	// 	.is_BJ_type(1'b0),
+	// 	.actual_next_PC(actual_pc),
+	// 	.actual_PC(pc_ex),
+	// 	.next_PC(pc_nxt)
+	// );
 
 	control_unit ControlUnit(
 		.opcode(instr[15:12]),
