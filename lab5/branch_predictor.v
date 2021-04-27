@@ -30,7 +30,7 @@ module branch_predictor_always_taken(clk, reset_n, PC, is_flush, is_BJ_type, act
 
 	output reg [`WORD_SIZE-1:0] next_PC;
 
-	reg [`IDX_SIZE-1:0] i;
+	integer i;
 	reg [`TAG_SIZE:0] tagtable [0:(2**`IDX_SIZE)-1];
 	reg [`WORD_SIZE-1:0] btb [0:(2**`IDX_SIZE)-1];
 
@@ -38,19 +38,26 @@ module branch_predictor_always_taken(clk, reset_n, PC, is_flush, is_BJ_type, act
 	assign tag = PC[`WORD_SIZE-1:`IDX_SIZE];
 	assign idx = PC[`IDX_SIZE-1:0];
 
+	initial begin
+		for(i = 0; i < (2**`IDX_SIZE); i=i+1) begin
+			tagtable[i] <= ~0;
+			btb[i] <= ~0;
+		end
+	end
+
 	always @(posedge clk) begin
 		if (!reset_n) begin
-			for(i = 0; i < `IDX_SIZE; i=i+1) begin
-				tagtable[i] = ~0;
-				btb[i] = ~0;
+			for(i = 0; i < (2**`IDX_SIZE); i=i+1) begin
+				tagtable[i] <= ~0;
+				btb[i] <= ~0;
 			end
 		end else begin
 			$display("tagtable: %b, btb: %b", tagtable[idx], btb[idx]);
 			$display("idx: %b, tag: %b, is_BJ_type: %b", idx, tag, is_BJ_type);
 			if (is_BJ_type) begin
 				$display("Update table for BJ type! actual_next_pc: %h, actual_taken_pc: %h", actual_next_PC, actual_taken_PC);
-				tagtable[actual_PC[`IDX_SIZE-1:0]] = actual_PC[`WORD_SIZE-1:`IDX_SIZE];
-				btb[actual_PC[`IDX_SIZE-1:0]] = actual_taken_PC;
+				tagtable[actual_PC[`IDX_SIZE-1:0]] <= actual_PC[`WORD_SIZE-1:`IDX_SIZE];
+				btb[actual_PC[`IDX_SIZE-1:0]] <= actual_taken_PC;
 			end
 		end
 	end
