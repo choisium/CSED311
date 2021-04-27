@@ -290,27 +290,27 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	end
 
 	// choose one of branch predictors
-	branch_predictor_always_not_taken BranchPredictor(
-		.clk(clk),
-		.reset_n(reset_n),
-		.PC(pc),
-		.is_flush(flush),
-		.is_BJ_type(1'b0),
-		.actual_next_PC(`WORD_SIZE'b0),
-		.actual_PC(actual_pc),
-		.next_PC(pc_nxt)
-	);
-
-	// branch_predictor_always_taken BranchPredictor(
+	// branch_predictor_always_not_taken BranchPredictor(
 	// 	.clk(clk),
 	// 	.reset_n(reset_n),
 	// 	.PC(pc),
 	// 	.is_flush(flush),
 	// 	.is_BJ_type(1'b0),
-	// 	.actual_next_PC(`WORD_SIZE'b0),
-	// 	.actual_PC(actual_pc),
+	// 	.actual_next_PC(actual_pc),
+	// 	.actual_PC(pc_ex),
 	// 	.next_PC(pc_nxt)
 	// );
+
+	branch_predictor_always_taken BranchPredictor(
+		.clk(clk),
+		.reset_n(reset_n),
+		.PC(pc),
+		.is_flush(flush),
+		.is_BJ_type(1'b0),
+		.actual_next_PC(actual_pc),
+		.actual_PC(pc_ex),
+		.next_PC(pc_nxt)
+	);
 
 	// branch_predictor_global_predictor BranchPredictor(
 	// 	.clk(clk),
@@ -318,8 +318,8 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	// 	.PC(pc),
 	// 	.is_flush(flush),
 	// 	.is_BJ_type(1'b0),
-	// 	.actual_next_PC(`WORD_SIZE'b0),
-	// 	.actual_PC(actual_pc),
+	// 	.actual_next_PC(actual_pc),
+	// 	.actual_PC(pc_ex),
 	// 	.next_PC(pc_nxt)
 	// );
 
