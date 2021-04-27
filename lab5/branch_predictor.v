@@ -39,7 +39,7 @@ module branch_predictor_always_taken(clk, reset_n, PC, is_flush, is_BJ_type, act
 
 	always @(*) begin
 		if (!reset_n) begin
-			for(i = 0; i < `IDX_SIZE; i++) begin
+			for(i = 0; i < `IDX_SIZE; i=i+1) begin
 				tagtable[i] = ~0;
 				btb[i] = ~0;
 			end
