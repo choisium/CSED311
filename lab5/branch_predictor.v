@@ -12,7 +12,7 @@ module branch_predictor(clk, reset_n, PC, is_flush, is_BJ_type, actual_next_PC, 
 
 	output [`WORD_SIZE-1:0] next_PC;
 
-	assign next_PC = is_flush? actual_PC: PC + 1;
+	assign next_PC = (is_flush | !(PC < 16'hc6))? actual_PC: PC + 1;
 	//TODO: implement branch predictor
 
 endmodule

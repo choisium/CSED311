@@ -31,8 +31,6 @@ module control_unit (opcode, func_code, clk, reset_n, halt, wwd, new_inst, use_r
 		reg_write = 0;
 		pc_src = 0;
 		reg_src = 0;
-		alu_branch_type = 0;
-		alu_func_code = 0;
 		new_inst = 0;
 		alu_func_code = 0;
 		alu_branch_type = 0;
@@ -52,8 +50,6 @@ module control_unit (opcode, func_code, clk, reset_n, halt, wwd, new_inst, use_r
 		reg_write = 0;
 		pc_src = 0;
 		reg_src = 0;
-		alu_branch_type = 0;
-		alu_func_code = 0;
 		new_inst = 0;
 
 		case(opcode)
@@ -153,6 +149,7 @@ module control_unit (opcode, func_code, clk, reset_n, halt, wwd, new_inst, use_r
 	always @(*) begin
 		alu_func_code = 4'd15;
 		alu_branch_type = 4'd0;
+
 		case (opcode)
 			`ALU_OP: begin
 				case(func_code)

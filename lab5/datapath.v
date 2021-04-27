@@ -39,7 +39,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	
 
 	// IF/ID control signals
-	wire halt, use_rs, use_rt; wire[1:0] reg_dest;
+	wire halt_id, use_rs, use_rt; wire[1:0] reg_dest;
 	wire alu_src_id, branch_id; wire[1:0] pc_src_id, alu_branch_type_id; wire[3:0] alu_func_code_id; // to EX
 	wire mem_read_id, mem_write_id; // to MEM
 	wire reg_write_id, wwd_id; wire[1:0] reg_src_id; reg new_inst_id; // to MEM
@@ -57,7 +57,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	// ID/EX pipeline control signals
 	reg alu_src_ex, branch_ex; reg[1:0] pc_src_ex, alu_branch_type_ex; reg[3:0] alu_func_code_ex; // to EX
 	reg mem_read_ex, mem_write_ex; // to MEM
-	reg wwd_ex, new_inst_ex, reg_write_ex; reg[1:0] reg_src_ex; // to WB
+	reg halt_ex, wwd_ex, new_inst_ex, reg_write_ex; reg[1:0] reg_src_ex; // to WB
 		
 	// EX additional wire and reg
 	wire[`WORD_SIZE-1:0] alu_out_ex, pc_branch, rf_rs_forwarded, rf_rt_forwarded, alu_operand_B;
@@ -71,7 +71,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		
 	// EX/MEM control signals
 	reg mem_read_mem, mem_write_mem; // to EX
-	reg wwd_mem, new_inst_mem, reg_write_mem; reg[1:0] reg_src_mem; // to MEM
+	reg halt_mem, wwd_mem, new_inst_mem, reg_write_mem; reg[1:0] reg_src_mem; // to MEM
 
 	// MEM additional wire and reg
 	reg[`WORD_SIZE-1:0] mem_read_data;
@@ -81,7 +81,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	reg[1:0] rd_wb;
 	
 	// MEM/WB control signals
-	reg wwd_wb, new_inst_wb, reg_write_wb; reg[1:0] reg_src_wb;
+	reg halt_wb, wwd_wb, new_inst_wb, reg_write_wb; reg[1:0] reg_src_wb;
 
 	// WB additional wire and reg
 	wire[`WORD_SIZE-1:0] write_data_wb;
@@ -89,6 +89,9 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	// flush
 	reg fcond1, fcond2, fcond3;
 	reg flush;
+
+	// halt
+	reg halt;
 
 	initial begin
 		pc <= 0;
@@ -105,7 +108,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		// EX control
 		alu_src_ex <= 0; branch_ex <= 0; pc_src_ex <= 0; alu_branch_type_ex <= 0; alu_func_code_ex <= 0;
 		mem_read_ex <= 0; mem_write_ex <= 0; 
-		wwd_ex <= 0; new_inst_ex <= 0; reg_write_ex <= 0; reg_src_ex <= 0; 
+		halt_ex <= 0; wwd_ex <= 0; new_inst_ex <= 0; reg_write_ex <= 0; reg_src_ex <= 0; 
 
 		// EX/MEM pipeline register
 		pc_mem <= 0; rf_rs_mem <= 0; rf_rt_mem <= 0; alu_out_mem <= 0; 
@@ -113,14 +116,17 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		
 		// EX/MEM control signals
 		mem_read_mem <= 0; mem_write_mem <= 0; 
-		wwd_mem <= 0; new_inst_mem <= 0; reg_write_mem <=0; reg_src_mem <= 0;
+		halt_mem <= 0; wwd_mem <= 0; new_inst_mem <= 0; reg_write_mem <=0; reg_src_mem <= 0;
 
 		// MEM/WB control signals
 		pc_wb <= 0; rf_rs_wb <= 0; alu_out_wb <= 0;
 		rd_wb <= 0;
 
 		// MEM/WB control signals
-		wwd_wb <= 0; new_inst_wb <= 0; reg_write_wb <= 0; reg_src_wb <= 0;
+		halt_wb <= 0; wwd_wb <= 0; new_inst_wb <= 0; reg_write_wb <= 0; reg_src_wb <= 0;
+
+		// halt
+		halt <= 0;
 	end
 
 
@@ -162,14 +168,17 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		fcond2 = (pc_id != 0);
 		fcond3 = (pc_ex != `WORD_SIZE'hffff);
 
-		flush = (fcond1 & fcond2 & fcond3) ? 1: 0; 
-		$strobe("pc: %h, pc_id: %h, pc_ex: %h, pc_mem: %h, pc_wb: %h, actual_pc: %h", pc, pc_id, pc_ex, pc_mem, pc_wb, actual_pc);
-		$strobe("new_inst_if: %h, new_inst_id: %h, new_inst_ex: %h, new_inst_mem: %h, new_inst_wb: %h", new_inst_if, new_inst_id, new_inst_ex, new_inst_mem, new_inst_wb);
+		flush = (fcond1 & fcond2 & fcond3) ? 1: 0;
 	end
+	
+	// set halt
+	assign is_halted = halt;
 
 	// update pipeline register
 	always @(posedge clk) begin
 		$strobe("--- clk posedge --- pc: %h, pc_nxt: %h, instr: %h", pc, pc_nxt, instr);
+		$strobe("pc: %h, pc_id: %h, pc_ex: %h, pc_mem: %h, pc_wb: %h, actual_pc: %h", pc, pc_id, pc_ex, pc_mem, pc_wb, actual_pc);
+		$strobe("new_inst_if: %h, new_inst_id: %h, new_inst_ex: %h, new_inst_mem: %h, new_inst_wb: %h, wwd_wb: %h, halt_wb: %h", new_inst_if, new_inst_id, new_inst_ex, new_inst_mem, new_inst_wb, wwd_wb, halt_wb);
 		if (!reset_n) begin
 			pc <= 0;
 			num_inst <= 0; output_port <= 0;
@@ -184,23 +193,26 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 			
 			// EX control
 			alu_src_ex <= 0; branch_ex <= 0; pc_src_ex <= 0; alu_branch_type_ex <= 0; alu_func_code_ex <= 0;
-			mem_read_ex <= 0; mem_write_ex <= 0; 
-			wwd_ex <= 0; new_inst_ex <= 0; reg_write_ex <= 0; reg_src_ex <= 0; 
+			mem_read_ex <= 0; mem_write_ex <= 0;
+			halt_ex <= 0; wwd_ex <= 0; new_inst_ex <= 0; reg_write_ex <= 0; reg_src_ex <= 0; 
 
 			// EX/MEM pipeline register
 			pc_mem <= 0; rf_rs_mem <= 0; rf_rt_mem <= 0; alu_out_mem <= 0; 
 			rd_mem <= 0; 
 			
 			// EX/MEM control signals
-			mem_read_mem <= 0; mem_write_mem <= 0; 
-			wwd_mem <= 0; new_inst_mem <= 0; reg_write_mem <=0; reg_src_mem <= 0;
+			mem_read_mem <= 0; mem_write_mem <= 0;
+			halt_mem <= 0; wwd_mem <= 0; new_inst_mem <= 0; reg_write_mem <=0; reg_src_mem <= 0;
 
 			// MEM/WB control signals
 			pc_wb <= 0; rf_rs_wb <= 0; alu_out_wb <= 0;
 			rd_wb <= 0;
 
 			// MEM/WB control signals
-			wwd_wb <= 0; new_inst_wb <= 0; reg_write_wb <= 0; reg_src_wb <= 0;
+			halt_wb <= 0; wwd_wb <= 0; new_inst_wb <= 0; reg_write_wb <= 0; reg_src_wb <= 0;
+
+			// halt
+			halt <= 0;
 		end
 		else begin
 			// update pc
@@ -233,16 +245,16 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 			end
 			
 			// update EX control
-			if(!flush && !stall) begin
+			if(!flush && !stall && pc_id != `WORD_SIZE'hffff) begin
 				alu_src_ex <= alu_src_id; branch_ex <= branch_id; pc_src_ex <= pc_src_id; 
 				alu_branch_type_ex <= alu_branch_type_id; alu_func_code_ex <= alu_func_code_id;
-				mem_read_ex <= mem_read_id; mem_write_ex <= mem_write_id; 
-				wwd_ex <= wwd_id; new_inst_ex <= new_inst_id; reg_write_ex <= reg_write_id; reg_src_ex <= reg_src_id; 
+				mem_read_ex <= mem_read_id; mem_write_ex <= mem_write_id;
+				halt_ex <= halt_id; wwd_ex <= wwd_id; new_inst_ex <= new_inst_id; reg_write_ex <= reg_write_id; reg_src_ex <= reg_src_id;
 			end else begin
 				alu_src_ex <= 0; branch_ex <= 0; pc_src_ex <= 0; 
 				alu_branch_type_ex <= 0; alu_func_code_ex <= 4'd15;
-				mem_read_ex <= 0; mem_write_ex <= 0; 
-				wwd_ex <= 0; new_inst_ex <= 0; reg_write_ex <= 0; reg_src_ex <= 0; 
+				mem_read_ex <= 0; mem_write_ex <= 0;
+				halt_ex <= 0; wwd_ex <= 0; new_inst_ex <= 0; reg_write_ex <= 0; reg_src_ex <= 0; 
 			end
 
 			// update EX/MEM pipeline register
@@ -250,15 +262,18 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 			rd_mem <= rd_ex; 
 
 			// update EX/MEM control signals
-			mem_read_mem <= mem_read_ex; mem_write_mem <= mem_write_ex; 
-			wwd_mem <= wwd_ex; new_inst_mem <= new_inst_ex; reg_write_mem <= reg_write_ex; reg_src_mem <= reg_src_ex;
+			mem_read_mem <= mem_read_ex; mem_write_mem <= mem_write_ex;
+			halt_mem <= halt_ex; wwd_mem <= wwd_ex; new_inst_mem <= new_inst_ex; reg_write_mem <= reg_write_ex; reg_src_mem <= reg_src_ex;
 
 			// update MEM/WB control signals
 			pc_wb <= pc_mem; rf_rs_wb <= rf_rs_mem; alu_out_wb <= alu_out_mem;
 			rd_wb <= rd_mem;
 
 			// update MEM/WB control signals
-			wwd_wb <= wwd_mem; new_inst_wb <= new_inst_mem; reg_write_wb <= reg_write_mem; reg_src_wb <= reg_src_mem;
+			halt_wb <= halt_mem; wwd_wb <= wwd_mem; new_inst_wb <= new_inst_mem; reg_write_wb <= reg_write_mem; reg_src_wb <= reg_src_mem;
+
+			// halt
+			halt <= halt_wb;
 		end
 	end
 
@@ -290,7 +305,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		.func_code(instr[5:0]),
 		.clk(clk),
 		.reset_n(reset_n),
-		.halt(halt),
+		.halt(halt_id),
 		.wwd(wwd_id),
 		.new_inst(new_inst_if),
 		.use_rs(use_rs),
@@ -338,7 +353,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	mux2_1 MUX_branch(
 		.sel(branch_ex & alu_bcond),
 		.i1(pc_ex + `WORD_SIZE'b1),
-		.i2(pc_ex + immmed_id),
+		.i2(pc_ex + `WORD_SIZE'b1 + immed_ex),
 		.o(pc_branch)
 	);
 
@@ -346,7 +361,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		.sel(pc_src_ex),
 		.i1(pc_branch),
 		.i2({pc_ex[15:12], target}),
-		.i3(rf_rs_ex),
+		.i3(rf_rs_forwarded),
 		.i4(pc_branch),
 		.o(actual_pc)
 	);
@@ -371,7 +386,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		.sel(reg_src_wb),
 		.i1(alu_out_wb),
 		.i2(mem_read_data),
-		.i3(pc_wb),
+		.i3(pc_wb + `WORD_SIZE'b1),
 		.i4(alu_out_wb),
 		.o(write_data_wb)
 	);
