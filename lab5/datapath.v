@@ -305,7 +305,19 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	// 	.next_PC(pc_nxt)
 	// );
 
-	branch_predictor_always_taken BranchPredictor(
+	// branch_predictor_always_taken BranchPredictor(
+	// 	.clk(clk),
+	// 	.reset_n(reset_n),
+	// 	.PC(pc),
+	// 	.is_flush(flush),
+	// 	.is_BJ_type(branch_ex || (pc_src_ex != 2'b0)),
+	// 	.actual_taken_PC(actual_taken_pc),
+	// 	.actual_next_PC(actual_pc),
+	// 	.actual_PC(pc_ex),
+	// 	.next_PC(pc_nxt)
+	// );
+
+	branch_predictor_global_predictor BranchPredictor(
 		.clk(clk),
 		.reset_n(reset_n),
 		.PC(pc),
@@ -316,17 +328,6 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		.actual_PC(pc_ex),
 		.next_PC(pc_nxt)
 	);
-
-	// branch_predictor_global_predictor BranchPredictor(
-	// 	.clk(clk),
-	// 	.reset_n(reset_n),
-	// 	.PC(pc),
-	// 	.is_flush(flush),
-	// 	.is_BJ_type(1'b0),
-	// 	.actual_next_PC(actual_pc),
-	// 	.actual_PC(pc_ex),
-	// 	.next_PC(pc_nxt)
-	// );
 
 	control_unit ControlUnit(
 		.opcode(instr[15:12]),
