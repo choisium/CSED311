@@ -147,119 +147,172 @@ module branch_predictor_global_predictor(clk, reset_n, PC, is_flush, is_BJ_type,
 				tagtable[actual_PC[`IDX_SIZE-1:0]] <= actual_PC[`WORD_SIZE-1:`IDX_SIZE];
 				btb[actual_PC[`IDX_SIZE-1:0]] <= actual_taken_PC;
 				
-				if (predict_history) begin // predicted as taken
-					if (!is_flush) begin // right prediction -> actually taken
+				if(actual_next_PC != actual_taken_PC) begin // actually not taken
+						
+					// global saturation counter
+					if(sat_cnt == 2'b00)		sat_cnt <= 2'b00;
+					else if(sat_cnt == 2'b01) 	sat_cnt <= 2'b00;
+					else if(sat_cnt == 2'b10) 	sat_cnt <= 2'b01;
+					else 						sat_cnt <= 2'b10;
 
-						// global saturation counter
-						if(sat_cnt == 2'b00) 		sat_cnt <= 2'b01;
-						else if(sat_cnt == 2'b01) 	sat_cnt <= 2'b10;
-						else if(sat_cnt == 2'b10) 	sat_cnt <= 2'b11;
-						else 						sat_cnt <= 2'b11;
+					// global hysteresis counter
+					if(hys_cnt == 2'b00)		hys_cnt <= 2'b00;
+					else if(hys_cnt == 2'b01) 	hys_cnt <= 2'b00;
+					else if(hys_cnt == 2'b10) 	hys_cnt <= 2'b00;
+					else 						hys_cnt <= 2'b10;
 
-						// global hysteresis counter
-						if(hys_cnt == 2'b00) 		hys_cnt <= 2'b01;
-						else if(hys_cnt == 2'b01) 	hys_cnt <= 2'b11;
-						else if(hys_cnt == 2'b10) 	hys_cnt <= 2'b11;
-						else 						hys_cnt <= 2'b11;
+					// indexed saturation counter
+					if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b00)		bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
+					else if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b01) bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
+					else if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b10) bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b01;
+					else 												bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b10;
 
-						// indexed saturation counter
-						if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b00) 		bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b01;
-						else if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b01) bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b10;
-						else if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b10) bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
-						else 												bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
-
-						// indexed hysteresis counter
-						if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b00)		bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b01;
-						else if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b01) bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
-						else if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b10) bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
-						else 												bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
-					end 
+					// indexed hysteresis counter
+					if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b00)		bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
+					else if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b01) bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
+					else if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b10) bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
+					else 												bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b10;
 				
-					else begin // wrong prediction -> actually not taken
-					
-						// global saturation counter
-						if(sat_cnt == 2'b00)		sat_cnt <= 2'b00;
-						else if(sat_cnt == 2'b01) 	sat_cnt <= 2'b00;
-						else if(sat_cnt == 2'b10) 	sat_cnt <= 2'b01;
-						else 						sat_cnt <= 2'b10;
+				end else begin // actually taken
 
-						// global hysteresis counter
-						if(hys_cnt == 2'b00)		hys_cnt <= 2'b00;
-						else if(hys_cnt == 2'b01) 	hys_cnt <= 2'b00;
-						else if(hys_cnt == 2'b10) 	hys_cnt <= 2'b00;
-						else 						hys_cnt <= 2'b10;
+					// global saturation counter
+					if(sat_cnt == 2'b00) 		sat_cnt <= 2'b01;
+					else if(sat_cnt == 2'b01) 	sat_cnt <= 2'b10;
+					else if(sat_cnt == 2'b10) 	sat_cnt <= 2'b11;
+					else 						sat_cnt <= 2'b11;
 
-						// indexed saturation counter
-						if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b00)		bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
-						else if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b01) bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
-						else if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b10) bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b01;
-						else 												bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b10;
+					// global hysteresis counter
+					if(hys_cnt == 2'b00) 		hys_cnt <= 2'b01;
+					else if(hys_cnt == 2'b01) 	hys_cnt <= 2'b11;
+					else if(hys_cnt == 2'b10) 	hys_cnt <= 2'b11;
+					else 						hys_cnt <= 2'b11;
 
-						// indexed hysteresis counter
-						if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b00)		bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
-						else if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b01) bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
-						else if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b10) bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
-						else 												bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b10;
+					// indexed saturation counter
+					if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b00) 		bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b01;
+					else if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b01) bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b10;
+					else if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b10) bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
+					else 												bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
 
-					end
+					// indexed hysteresis counter
+					if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b00)		bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b01;
+					else if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b01) bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
+					else if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b10) bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
+					else 												bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
 				end
+				
+				// if (predict_history) begin // predicted as taken
+				// 	if (!is_flush) begin // right prediction -> actually taken
 
-				else begin // predicted as not taken
-					if (!is_flush) begin // right prediction -> actually not taken
+				// 		// global saturation counter
+				// 		if(sat_cnt == 2'b00) 		sat_cnt <= 2'b01;
+				// 		else if(sat_cnt == 2'b01) 	sat_cnt <= 2'b10;
+				// 		else if(sat_cnt == 2'b10) 	sat_cnt <= 2'b11;
+				// 		else 						sat_cnt <= 2'b11;
 
-						// global saturation counter
-						if(sat_cnt == 2'b00) 		sat_cnt <= 2'b00;
-						else if(sat_cnt == 2'b01) 	sat_cnt <= 2'b00;
-						else if(sat_cnt == 2'b10) 	sat_cnt <= 2'b01;
-						else 						sat_cnt <= 2'b10;
+				// 		// global hysteresis counter
+				// 		if(hys_cnt == 2'b00) 		hys_cnt <= 2'b01;
+				// 		else if(hys_cnt == 2'b01) 	hys_cnt <= 2'b11;
+				// 		else if(hys_cnt == 2'b10) 	hys_cnt <= 2'b11;
+				// 		else 						hys_cnt <= 2'b11;
 
-						// global hysteresis counter
-						if(hys_cnt == 2'b00) 		hys_cnt <= 2'b00;
-						else if(hys_cnt == 2'b01) 	hys_cnt <= 2'b00;
-						else if(hys_cnt == 2'b10) 	hys_cnt <= 2'b00;
-						else 						hys_cnt <= 2'b10;
+				// 		// indexed saturation counter
+				// 		if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b00) 		bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b01;
+				// 		else if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b01) bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b10;
+				// 		else if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b10) bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
+				// 		else 												bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
 
-						// indexed saturation counter
-						if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b00) 		bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
-						else if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b01) bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
-						else if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b10) bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b01;
-						else 												bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b10;
-
-						// indexed hysteresis counter
-						if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b00)		bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
-						else if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b01) bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
-						else if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b10) bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
-						else 												bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b10;
-					end 
+				// 		// indexed hysteresis counter
+				// 		if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b00)		bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b01;
+				// 		else if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b01) bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
+				// 		else if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b10) bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
+				// 		else 												bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
+				// 	end 
+				
+				// 	else begin // wrong prediction -> actually not taken
 					
-					else begin // wrong prediction -> actually taken
+				// 		// global saturation counter
+				// 		if(sat_cnt == 2'b00)		sat_cnt <= 2'b00;
+				// 		else if(sat_cnt == 2'b01) 	sat_cnt <= 2'b00;
+				// 		else if(sat_cnt == 2'b10) 	sat_cnt <= 2'b01;
+				// 		else 						sat_cnt <= 2'b10;
+
+				// 		// global hysteresis counter
+				// 		if(hys_cnt == 2'b00)		hys_cnt <= 2'b00;
+				// 		else if(hys_cnt == 2'b01) 	hys_cnt <= 2'b00;
+				// 		else if(hys_cnt == 2'b10) 	hys_cnt <= 2'b00;
+				// 		else 						hys_cnt <= 2'b10;
+
+				// 		// indexed saturation counter
+				// 		if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b00)		bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
+				// 		else if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b01) bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
+				// 		else if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b10) bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b01;
+				// 		else 												bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b10;
+
+				// 		// indexed hysteresis counter
+				// 		if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b00)		bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
+				// 		else if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b01) bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
+				// 		else if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b10) bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
+				// 		else 												bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b10;
+
+				// 	end
+				// end
+
+				// else begin // predicted as not taken
+				// 	if (!is_flush) begin // right prediction -> actually not taken
+
+				// 		// global saturation counter
+				// 		if(sat_cnt == 2'b00) 		sat_cnt <= 2'b00;
+				// 		else if(sat_cnt == 2'b01) 	sat_cnt <= 2'b00;
+				// 		else if(sat_cnt == 2'b10) 	sat_cnt <= 2'b01;
+				// 		else 						sat_cnt <= 2'b10;
+
+				// 		// global hysteresis counter
+				// 		if(hys_cnt == 2'b00) 		hys_cnt <= 2'b00;
+				// 		else if(hys_cnt == 2'b01) 	hys_cnt <= 2'b00;
+				// 		else if(hys_cnt == 2'b10) 	hys_cnt <= 2'b00;
+				// 		else 						hys_cnt <= 2'b10;
+
+				// 		// indexed saturation counter
+				// 		if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b00) 		bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
+				// 		else if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b01) bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
+				// 		else if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b10) bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b01;
+				// 		else 												bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b10;
+
+				// 		// indexed hysteresis counter
+				// 		if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b00)		bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
+				// 		else if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b01) bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
+				// 		else if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b10) bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b00;
+				// 		else 												bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b10;
+				// 	end 
 					
-						// global saturation counter
-						if(sat_cnt == 2'b00)		sat_cnt <= 2'b01;
-						else if(sat_cnt == 2'b01) 	sat_cnt <= 2'b10;
-						else if(sat_cnt == 2'b10) 	sat_cnt <= 2'b11;
-						else 						sat_cnt <= 2'b11;
+				// 	else begin // wrong prediction -> actually taken
+					
+				// 		// global saturation counter
+				// 		if(sat_cnt == 2'b00)		sat_cnt <= 2'b01;
+				// 		else if(sat_cnt == 2'b01) 	sat_cnt <= 2'b10;
+				// 		else if(sat_cnt == 2'b10) 	sat_cnt <= 2'b11;
+				// 		else 						sat_cnt <= 2'b11;
 
-						// global hysteresis counter
-						if(hys_cnt == 2'b00)		hys_cnt <= 2'b01;
-						else if(hys_cnt == 2'b01) 	hys_cnt <= 2'b11;
-						else if(hys_cnt == 2'b10) 	hys_cnt <= 2'b11;
-						else 						hys_cnt <= 2'b11;
+				// 		// global hysteresis counter
+				// 		if(hys_cnt == 2'b00)		hys_cnt <= 2'b01;
+				// 		else if(hys_cnt == 2'b01) 	hys_cnt <= 2'b11;
+				// 		else if(hys_cnt == 2'b10) 	hys_cnt <= 2'b11;
+				// 		else 						hys_cnt <= 2'b11;
 
-						// indexed saturation counter
-						if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b00)		bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b01;
-						else if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b01) bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b10;
-						else if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b10) bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
-						else 												bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
+				// 		// indexed saturation counter
+				// 		if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b00)		bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b01;
+				// 		else if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b01) bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b10;
+				// 		else if(bht_sat[actual_PC[`IDX_SIZE-1:0]] == 2'b10) bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
+				// 		else 												bht_sat[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
 
-						// indexed hysteresis counter
-						if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b00)		bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b01;
-						else if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b01) bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
-						else if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b10) bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
-						else 												bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
+				// 		// indexed hysteresis counter
+				// 		if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b00)		bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b01;
+				// 		else if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b01) bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
+				// 		else if(bht_hys[actual_PC[`IDX_SIZE-1:0]] == 2'b10) bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
+				// 		else 												bht_hys[actual_PC[`IDX_SIZE-1:0]] <= 2'b11;
 
-					end
-				end
+				// 	end
+				// end
 			end
 		end
 	end
