@@ -180,9 +180,6 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 
 	// update pipeline register
 	always @(posedge clk) begin
-		$strobe("--- clk posedge --- pc: %h, pc_nxt: %h, instr: %h", pc, pc_nxt, instr);
-		$strobe("pc: %h, pc_id: %h, pc_ex: %h, pc_mem: %h, pc_wb: %h, actual_pc: %h", pc, pc_id, pc_ex, pc_mem, pc_wb, actual_pc);
-		$strobe("new_inst_if: %h, new_inst_id: %h, new_inst_ex: %h, new_inst_mem: %h, new_inst_wb: %h, wwd_wb: %h, halt_wb: %h", new_inst_if, new_inst_id, new_inst_ex, new_inst_mem, new_inst_wb, wwd_wb, halt_wb);
 		if (!reset_n) begin
 			pc <= 0;
 			num_inst <= 0; output_port <= 0;
@@ -283,12 +280,10 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 
 	always @(posedge clk) begin
 		if (wwd_wb) begin
-			$strobe("rf_rs: %h, wwd_wb: %b, output_port: %h", rf_rs_wb, wwd_wb, output_port);
 			output_port <= rf_rs_wb;
 		end
 
 		if (new_inst_wb) begin
-			$strobe("new inst finished!");
 			num_inst <= num_inst + 1;
 		end
 	end

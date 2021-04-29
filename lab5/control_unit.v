@@ -1,6 +1,5 @@
 `include "opcodes.v" 
 
-// module control_unit (opcode, func_code, clk, reset_n, pc_write_cond, pc_write, i_or_d, mem_read, mem_to_reg, mem_write, ir_write, pc_to_reg, pc_src, halt, wwd, new_inst, reg_write, alu_src_A, alu_src_B, alu_op);
 module control_unit (opcode, func_code, clk, reset_n, halt, wwd, new_inst, use_rs, use_rt, alu_src, branch, mem_read, mem_write, reg_write, pc_src, reg_dest, reg_src, alu_branch_type, alu_func_code);
 
 	input [3:0] opcode;
@@ -13,10 +12,6 @@ module control_unit (opcode, func_code, clk, reset_n, halt, wwd, new_inst, use_r
 	output reg alu_src, branch, mem_read, mem_write, reg_write;
 	output reg [1:0] pc_src, reg_dest, reg_src, alu_branch_type;
 	output reg [3:0] alu_func_code;
-	// output reg pc_write_cond, pc_write, i_or_d, mem_read, mem_to_reg, mem_write, ir_write, pc_src;
-	// output reg pc_to_reg, halt, wwd, new_inst;
-	// output reg [1:0] reg_write, alu_src_A, alu_src_B;
-	// output reg alu_op;
 
 	initial begin
 		halt = 0;

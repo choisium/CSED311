@@ -36,7 +36,6 @@ module register_file (read_out1, read_out2, read1, read2, dest, write_data, reg_
 			// write back if reg_write is high		
 			if (reg_write) RF[dest] <= write_data;
 			else RF[dest] <= RF[dest];
-			$strobe("RF 0: %h, RF 1: %h, RF 2: %h, RF 3: %h", RF[0], RF[1], RF[2], RF[3]);
 		end
     end
 
