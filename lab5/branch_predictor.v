@@ -52,10 +52,7 @@ module branch_predictor_always_taken(clk, reset_n, PC, is_flush, is_BJ_type, act
 				btb[i] <= ~0;
 			end
 		end else begin
-			$display("tagtable: %b, btb: %b", tagtable[idx], btb[idx]);
-			$display("idx: %b, tag: %b, is_BJ_type: %b", idx, tag, is_BJ_type);
 			if (is_BJ_type) begin
-				$display("Update table for BJ type! actual_next_pc: %h, actual_taken_pc: %h", actual_next_PC, actual_taken_PC);
 				tagtable[actual_PC[`IDX_SIZE-1:0]] <= actual_PC[`WORD_SIZE-1:`IDX_SIZE];
 				btb[actual_PC[`IDX_SIZE-1:0]] <= actual_taken_PC;
 			end
@@ -64,13 +61,10 @@ module branch_predictor_always_taken(clk, reset_n, PC, is_flush, is_BJ_type, act
 
 	always @(*) begin
 		if (is_flush) begin
-			$display("Prediction is wrong! actual_pc: %h, actual_next_pc: %h", actual_next_PC, actual_taken_PC);
 			next_PC = actual_next_PC;
 		end else if (tagtable[idx] == tag) begin
-			$display("tag is same! actual_pc: %h, actual_next_pc: %h", actual_PC, actual_next_PC);
 			next_PC = btb[idx];
 		end else begin
-			$display("tag is not same! actual_pc: %h, actual_next_pc: %h", actual_PC, actual_next_PC);
 			next_PC = !(PC < 16'hc6)? PC: PC + 1;
 		end
 	end
@@ -130,11 +124,7 @@ module branch_predictor_global_predictor(clk, reset_n, PC, is_flush, is_BJ_type,
 			hys_cnt <= 0;
 
 		end else begin
-			$display("tagtable: %b, btb: %b", tagtable[idx], btb[idx]);
-			$display("idx: %b, tag: %b, is_BJ_type: %b", idx, tag, is_BJ_type);
-			
 			if (is_BJ_type) begin
-				$display("Update table for wrong BJ type! actual_next_pc: %h, actual_taken_pc: %h", actual_next_PC, actual_taken_PC);
 				tagtable[actual_PC[`IDX_SIZE-1:0]] <= actual_PC[`WORD_SIZE-1:`IDX_SIZE];
 				btb[actual_PC[`IDX_SIZE-1:0]] <= actual_taken_PC;
 				
@@ -195,16 +185,13 @@ module branch_predictor_global_predictor(clk, reset_n, PC, is_flush, is_BJ_type,
 	end
 	always @(*) begin
 		if (is_flush) begin
-			$display("Prediction is wrong! actual_pc: %h, actual_next_pc: %h", actual_next_PC, actual_taken_PC);
 			next_PC = actual_next_PC;
 		end else if (tagtable[idx] == tag) begin
-			$display("tag is same! actual_pc: %h, actual_next_pc: %h", actual_PC, actual_next_PC);
 			next_PC = (sat_cnt >= 2'b10)? btb[idx] : (!(PC < 16'hc6)? PC: PC + 1);
 			// next_PC = (hys_cnt >= 2'b10)? btb[idx] : (!(PC < 16'hc6)? PC: PC + 1);
 			// next_PC = (bht_sat[idx] >= 2'b10)? btb[idx] : (!(PC < 16'hc6)? PC: PC + 1);
 			// next_PC = (bht_hys[idx] >= 2'b10)? btb[idx] : (!(PC < 16'hc6)? PC: PC + 1);
 		end else begin
-			$display("tag is not same! actual_pc: %h, actual_next_pc: %h", actual_PC, actual_next_PC);
 			next_PC = !(PC < 16'hc6)? PC: PC + 1;
 		end
 	end
