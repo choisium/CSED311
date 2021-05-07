@@ -39,18 +39,45 @@ module branch_predictor_always_taken(clk, reset_n, PC, is_flush, is_BJ_type, act
 	assign idx = PC[`IDX_SIZE-1:0];
 
 	initial begin
-		for(i = 0; i < (2**`IDX_SIZE); i=i+1) begin
-			tagtable[i] <= ~0;
-			btb[i] <= ~0;
-		end
+		tagtable[0] <= ~0;	tagtable[1] <= ~0;	tagtable[2] <= ~0;	tagtable[3] <= ~0;
+		tagtable[4] <= ~0;	tagtable[5] <= ~0;	tagtable[6] <= ~0;	tagtable[7] <= ~0;
+		tagtable[8] <= ~0;	tagtable[9] <= ~0;	tagtable[10] <= ~0;	tagtable[11] <= ~0;
+		tagtable[12] <= ~0;	tagtable[13] <= ~0;	tagtable[14] <= ~0;	tagtable[15] <= ~0;
+		tagtable[16] <= ~0;	tagtable[17] <= ~0;	tagtable[18] <= ~0;	tagtable[19] <= ~0;
+		tagtable[20] <= ~0;	tagtable[21] <= ~0;	tagtable[22] <= ~0;	tagtable[23] <= ~0;
+		tagtable[24] <= ~0;	tagtable[25] <= ~0;	tagtable[26] <= ~0;	tagtable[27] <= ~0;
+		tagtable[28] <= ~0;	tagtable[29] <= ~0;	tagtable[30] <= ~0;	tagtable[31] <= ~0;
+
+		btb[0] <= ~0;	btb[1] <= ~0;	btb[2] <= ~0;	btb[3] <= ~0;
+		btb[4] <= ~0;	btb[5] <= ~0;	btb[6] <= ~0;	btb[7] <= ~0;
+		btb[8] <= ~0;	btb[9] <= ~0;	btb[10] <= ~0;	btb[11] <= ~0;
+		btb[12] <= ~0;	btb[13] <= ~0;	btb[14] <= ~0;	btb[15] <= ~0;
+		btb[16] <= ~0;	btb[17] <= ~0;	btb[18] <= ~0;	btb[19] <= ~0;
+		btb[20] <= ~0;	btb[21] <= ~0;	btb[22] <= ~0;	btb[23] <= ~0;
+		btb[24] <= ~0;	btb[25] <= ~0;	btb[26] <= ~0;	btb[27] <= ~0;
+		btb[28] <= ~0;	btb[29] <= ~0;	btb[30] <= ~0;	btb[31] <= ~0;
 	end
 
 	always @(posedge clk) begin
 		if (!reset_n) begin
-			for(i = 0; i < (2**`IDX_SIZE); i=i+1) begin
-				tagtable[i] <= ~0;
-				btb[i] <= ~0;
-			end
+			tagtable[0] <= ~0;	tagtable[1] <= ~0;	tagtable[2] <= ~0;	tagtable[3] <= ~0;
+			tagtable[4] <= ~0;	tagtable[5] <= ~0;	tagtable[6] <= ~0;	tagtable[7] <= ~0;
+			tagtable[8] <= ~0;	tagtable[9] <= ~0;	tagtable[10] <= ~0;	tagtable[11] <= ~0;
+			tagtable[12] <= ~0;	tagtable[13] <= ~0;	tagtable[14] <= ~0;	tagtable[15] <= ~0;
+			tagtable[16] <= ~0;	tagtable[17] <= ~0;	tagtable[18] <= ~0;	tagtable[19] <= ~0;
+			tagtable[20] <= ~0;	tagtable[21] <= ~0;	tagtable[22] <= ~0;	tagtable[23] <= ~0;
+			tagtable[24] <= ~0;	tagtable[25] <= ~0;	tagtable[26] <= ~0;	tagtable[27] <= ~0;
+			tagtable[28] <= ~0;	tagtable[29] <= ~0;	tagtable[30] <= ~0;	tagtable[31] <= ~0;
+
+			btb[0] <= ~0;	btb[1] <= ~0;	btb[2] <= ~0;	btb[3] <= ~0;
+			btb[4] <= ~0;	btb[5] <= ~0;	btb[6] <= ~0;	btb[7] <= ~0;
+			btb[8] <= ~0;	btb[9] <= ~0;	btb[10] <= ~0;	btb[11] <= ~0;
+			btb[12] <= ~0;	btb[13] <= ~0;	btb[14] <= ~0;	btb[15] <= ~0;
+			btb[16] <= ~0;	btb[17] <= ~0;	btb[18] <= ~0;	btb[19] <= ~0;
+			btb[20] <= ~0;	btb[21] <= ~0;	btb[22] <= ~0;	btb[23] <= ~0;
+			btb[24] <= ~0;	btb[25] <= ~0;	btb[26] <= ~0;	btb[27] <= ~0;
+			btb[28] <= ~0;	btb[29] <= ~0;	btb[30] <= ~0;	btb[31] <= ~0;
+
 		end else begin
 			if (is_BJ_type) begin
 				tagtable[actual_PC[`IDX_SIZE-1:0]] <= actual_PC[`WORD_SIZE-1:`IDX_SIZE];
@@ -102,24 +129,84 @@ module branch_predictor_global_predictor(clk, reset_n, PC, is_flush, is_BJ_type,
 	assign idx = PC[`IDX_SIZE-1:0];
 
 	initial begin
-		for(i = 0; i < (2**`IDX_SIZE); i=i+1) begin
-			tagtable[i] <= ~0;
-			btb[i] <= ~0;
-			bht_sat[i] <= 0;
-			bht_hys[i] <= 0;
-		end
+		tagtable[0] <= ~0;	tagtable[1] <= ~0;	tagtable[2] <= ~0;	tagtable[3] <= ~0;
+		tagtable[4] <= ~0;	tagtable[5] <= ~0;	tagtable[6] <= ~0;	tagtable[7] <= ~0;
+		tagtable[8] <= ~0;	tagtable[9] <= ~0;	tagtable[10] <= ~0;	tagtable[11] <= ~0;
+		tagtable[12] <= ~0;	tagtable[13] <= ~0;	tagtable[14] <= ~0;	tagtable[15] <= ~0;
+		tagtable[16] <= ~0;	tagtable[17] <= ~0;	tagtable[18] <= ~0;	tagtable[19] <= ~0;
+		tagtable[20] <= ~0;	tagtable[21] <= ~0;	tagtable[22] <= ~0;	tagtable[23] <= ~0;
+		tagtable[24] <= ~0;	tagtable[25] <= ~0;	tagtable[26] <= ~0;	tagtable[27] <= ~0;
+		tagtable[28] <= ~0;	tagtable[29] <= ~0;	tagtable[30] <= ~0;	tagtable[31] <= ~0;
+
+		btb[0] <= ~0;	btb[1] <= ~0;	btb[2] <= ~0;	btb[3] <= ~0;
+		btb[4] <= ~0;	btb[5] <= ~0;	btb[6] <= ~0;	btb[7] <= ~0;
+		btb[8] <= ~0;	btb[9] <= ~0;	btb[10] <= ~0;	btb[11] <= ~0;
+		btb[12] <= ~0;	btb[13] <= ~0;	btb[14] <= ~0;	btb[15] <= ~0;
+		btb[16] <= ~0;	btb[17] <= ~0;	btb[18] <= ~0;	btb[19] <= ~0;
+		btb[20] <= ~0;	btb[21] <= ~0;	btb[22] <= ~0;	btb[23] <= ~0;
+		btb[24] <= ~0;	btb[25] <= ~0;	btb[26] <= ~0;	btb[27] <= ~0;
+		btb[28] <= ~0;	btb[29] <= ~0;	btb[30] <= ~0;	btb[31] <= ~0;
+
+		bht_sat[0] <= ~0;	bht_sat[1] <= ~0;	bht_sat[2] <= ~0;	bht_sat[3] <= ~0;
+		bht_sat[4] <= ~0;	bht_sat[5] <= ~0;	bht_sat[6] <= ~0;	bht_sat[7] <= ~0;
+		bht_sat[8] <= ~0;	bht_sat[9] <= ~0;	bht_sat[10] <= ~0;	bht_sat[11] <= ~0;
+		bht_sat[12] <= ~0;	bht_sat[13] <= ~0;	bht_sat[14] <= ~0;	bht_sat[15] <= ~0;
+		bht_sat[16] <= ~0;	bht_sat[17] <= ~0;	bht_sat[18] <= ~0;	bht_sat[19] <= ~0;
+		bht_sat[20] <= ~0;	bht_sat[21] <= ~0;	bht_sat[22] <= ~0;	bht_sat[23] <= ~0;
+		bht_sat[24] <= ~0;	bht_sat[25] <= ~0;	bht_sat[26] <= ~0;	bht_sat[27] <= ~0;
+		bht_sat[28] <= ~0;	bht_sat[29] <= ~0;	bht_sat[30] <= ~0;	bht_sat[31] <= ~0;
+
+		bht_hys[0] <= ~0;	bht_hys[1] <= ~0;	bht_hys[2] <= ~0;	bht_hys[3] <= ~0;
+		bht_hys[4] <= ~0;	bht_hys[5] <= ~0;	bht_hys[6] <= ~0;	bht_hys[7] <= ~0;
+		bht_hys[8] <= ~0;	bht_hys[9] <= ~0;	bht_hys[10] <= ~0;	bht_hys[11] <= ~0;
+		bht_hys[12] <= ~0;	bht_hys[13] <= ~0;	bht_hys[14] <= ~0;	bht_hys[15] <= ~0;
+		bht_hys[16] <= ~0;	bht_hys[17] <= ~0;	bht_hys[18] <= ~0;	bht_hys[19] <= ~0;
+		bht_hys[20] <= ~0;	bht_hys[21] <= ~0;	bht_hys[22] <= ~0;	bht_hys[23] <= ~0;
+		bht_hys[24] <= ~0;	bht_hys[25] <= ~0;	bht_hys[26] <= ~0;	bht_hys[27] <= ~0;
+		bht_hys[28] <= ~0;	bht_hys[29] <= ~0;	bht_hys[30] <= ~0;	bht_hys[31] <= ~0;
+
 		sat_cnt <= 0;
 		hys_cnt <= 0;
 	end
 
 	always @(posedge clk) begin
 		if (!reset_n) begin
-			for(i = 0; i < (2**`IDX_SIZE); i=i+1) begin
-				tagtable[i] <= ~0;
-				btb[i] <= ~0;
-				bht_sat[i] <= 0;
-				bht_hys[i] <= 0;
-			end
+			tagtable[0] <= ~0;	tagtable[1] <= ~0;	tagtable[2] <= ~0;	tagtable[3] <= ~0;
+			tagtable[4] <= ~0;	tagtable[5] <= ~0;	tagtable[6] <= ~0;	tagtable[7] <= ~0;
+			tagtable[8] <= ~0;	tagtable[9] <= ~0;	tagtable[10] <= ~0;	tagtable[11] <= ~0;
+			tagtable[12] <= ~0;	tagtable[13] <= ~0;	tagtable[14] <= ~0;	tagtable[15] <= ~0;
+			tagtable[16] <= ~0;	tagtable[17] <= ~0;	tagtable[18] <= ~0;	tagtable[19] <= ~0;
+			tagtable[20] <= ~0;	tagtable[21] <= ~0;	tagtable[22] <= ~0;	tagtable[23] <= ~0;
+			tagtable[24] <= ~0;	tagtable[25] <= ~0;	tagtable[26] <= ~0;	tagtable[27] <= ~0;
+			tagtable[28] <= ~0;	tagtable[29] <= ~0;	tagtable[30] <= ~0;	tagtable[31] <= ~0;
+
+			btb[0] <= ~0;	btb[1] <= ~0;	btb[2] <= ~0;	btb[3] <= ~0;
+			btb[4] <= ~0;	btb[5] <= ~0;	btb[6] <= ~0;	btb[7] <= ~0;
+			btb[8] <= ~0;	btb[9] <= ~0;	btb[10] <= ~0;	btb[11] <= ~0;
+			btb[12] <= ~0;	btb[13] <= ~0;	btb[14] <= ~0;	btb[15] <= ~0;
+			btb[16] <= ~0;	btb[17] <= ~0;	btb[18] <= ~0;	btb[19] <= ~0;
+			btb[20] <= ~0;	btb[21] <= ~0;	btb[22] <= ~0;	btb[23] <= ~0;
+			btb[24] <= ~0;	btb[25] <= ~0;	btb[26] <= ~0;	btb[27] <= ~0;
+			btb[28] <= ~0;	btb[29] <= ~0;	btb[30] <= ~0;	btb[31] <= ~0;
+
+			bht_sat[0] <= ~0;	bht_sat[1] <= ~0;	bht_sat[2] <= ~0;	bht_sat[3] <= ~0;
+			bht_sat[4] <= ~0;	bht_sat[5] <= ~0;	bht_sat[6] <= ~0;	bht_sat[7] <= ~0;
+			bht_sat[8] <= ~0;	bht_sat[9] <= ~0;	bht_sat[10] <= ~0;	bht_sat[11] <= ~0;
+			bht_sat[12] <= ~0;	bht_sat[13] <= ~0;	bht_sat[14] <= ~0;	bht_sat[15] <= ~0;
+			bht_sat[16] <= ~0;	bht_sat[17] <= ~0;	bht_sat[18] <= ~0;	bht_sat[19] <= ~0;
+			bht_sat[20] <= ~0;	bht_sat[21] <= ~0;	bht_sat[22] <= ~0;	bht_sat[23] <= ~0;
+			bht_sat[24] <= ~0;	bht_sat[25] <= ~0;	bht_sat[26] <= ~0;	bht_sat[27] <= ~0;
+			bht_sat[28] <= ~0;	bht_sat[29] <= ~0;	bht_sat[30] <= ~0;	bht_sat[31] <= ~0;
+
+			bht_hys[0] <= ~0;	bht_hys[1] <= ~0;	bht_hys[2] <= ~0;	bht_hys[3] <= ~0;
+			bht_hys[4] <= ~0;	bht_hys[5] <= ~0;	bht_hys[6] <= ~0;	bht_hys[7] <= ~0;
+			bht_hys[8] <= ~0;	bht_hys[9] <= ~0;	bht_hys[10] <= ~0;	bht_hys[11] <= ~0;
+			bht_hys[12] <= ~0;	bht_hys[13] <= ~0;	bht_hys[14] <= ~0;	bht_hys[15] <= ~0;
+			bht_hys[16] <= ~0;	bht_hys[17] <= ~0;	bht_hys[18] <= ~0;	bht_hys[19] <= ~0;
+			bht_hys[20] <= ~0;	bht_hys[21] <= ~0;	bht_hys[22] <= ~0;	bht_hys[23] <= ~0;
+			bht_hys[24] <= ~0;	bht_hys[25] <= ~0;	bht_hys[26] <= ~0;	bht_hys[27] <= ~0;
+			bht_hys[28] <= ~0;	bht_hys[29] <= ~0;	bht_hys[30] <= ~0;	bht_hys[31] <= ~0;
+
 			sat_cnt <= 0;
 			hys_cnt <= 0;
 
