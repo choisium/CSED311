@@ -1,4 +1,5 @@
 `timescale 1ns/1ns
+`include "opcodes.v"
 `define PERIOD1 100
 `define MEMORY_SIZE 256	//	size of memory is 2^8 words (reduced size)
 `define WORD_SIZE 16	//	instead of 2^16 words to reduce memory
