@@ -265,18 +265,26 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 			if(!flush & !stall & !instr_stall & !mem_data_stall) begin
 				target <= instr[11:0]; pc_ex <= pc_id; rf_rs_ex <= rf_rs; rf_rt_ex <= rf_rt; immed_ex <= immed_id;
 				rs_ex <= instr[11:10]; rt_ex <= instr[9:8]; rd_ex <= rd_id;
+			end else if (mem_data_stall) begin
+				target <= target; pc_ex <= pc_ex; rf_rs_ex <= rf_rs_ex; rf_rt_ex <= rf_rt_ex; immed_ex <= immed_ex;
+				rs_ex <= rs_ex; rt_ex <= rt_ex; rd_ex <= rd_ex;
 			end else begin
 				pc_ex <= ~0;
 				target <= 0; rf_rs_ex <= 0; rf_rt_ex <= 0; immed_ex <= 0;
 				rs_ex <= 0; rt_ex <= 0; rd_ex <= 0;
 			end
 			
-			// update EX control
-			if(!flush && !stall && !instr_stall && pc_id != `WORD_SIZE'hffff) begin
+			// update ID/EX control
+			if(!flush && !stall && !instr_stall && !mem_data_stall && pc_id != `WORD_SIZE'hffff) begin
 				alu_src_ex <= alu_src_id; branch_ex <= branch_id; pc_src_ex <= pc_src_id; 
 				alu_branch_type_ex <= alu_branch_type_id; alu_func_code_ex <= alu_func_code_id;
 				mem_read_ex <= mem_read_id; mem_write_ex <= mem_write_id;
 				halt_ex <= halt_id; wwd_ex <= wwd_id; new_inst_ex <= new_inst_id; reg_write_ex <= reg_write_id; reg_src_ex <= reg_src_id;
+			end else if (mem_data_stall) begin
+				alu_src_ex <= alu_src_ex; branch_ex <= branch_ex; pc_src_ex <= pc_src_ex;
+				alu_branch_type_ex <= alu_branch_type_ex; alu_func_code_ex <= alu_func_code_ex;
+				mem_read_ex <= mem_read_ex; mem_write_ex <= mem_write_ex;
+				halt_ex <= halt_ex; wwd_ex <= wwd_ex; new_inst_ex <= new_inst_ex; reg_write_ex <= reg_write_ex; reg_src_ex <= reg_src_ex;
 			end else begin
 				alu_src_ex <= 0; branch_ex <= 0; pc_src_ex <= 0; 
 				alu_branch_type_ex <= 0; alu_func_code_ex <= 4'd15;
@@ -285,19 +293,33 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 			end
 
 			// update EX/MEM pipeline register
-			pc_mem <= pc_ex; rf_rs_mem <= rf_rs_forwarded; rf_rt_mem <= rf_rt_ex; alu_out_mem <= alu_out_ex; 
-			rd_mem <= rd_ex; 
+			if (!mem_data_stall) begin
+				pc_mem <= pc_ex; rf_rs_mem <= rf_rs_forwarded; rf_rt_mem <= rf_rt_ex; alu_out_mem <= alu_out_ex;
+				rd_mem <= rd_ex;
+			end else begin
+				pc_mem <= pc_mem; rf_rs_mem <= rf_rs_mem; rf_rt_mem <= rf_rt_mem; alu_out_mem <= alu_out_mem;
+				rd_mem <= rd_mem;
+			end
 
 			// update EX/MEM control signals
-			mem_read_mem <= mem_read_ex; mem_write_mem <= mem_write_ex;
-			halt_mem <= halt_ex; wwd_mem <= wwd_ex; new_inst_mem <= new_inst_ex; reg_write_mem <= reg_write_ex; reg_src_mem <= reg_src_ex;
+			if (!mem_data_stall) begin
+				mem_read_mem <= mem_read_ex; mem_write_mem <= mem_write_ex;
+				halt_mem <= halt_ex; wwd_mem <= wwd_ex; new_inst_mem <= new_inst_ex; reg_write_mem <= reg_write_ex; reg_src_mem <= reg_src_ex;
+			end else begin
+				mem_read_mem <= mem_read_mem; mem_write_mem <= mem_write_mem;
+				halt_mem <= halt_mem; wwd_mem <= wwd_mem; new_inst_mem <= new_inst_mem; reg_write_mem <= reg_write_mem; reg_src_mem <= reg_src_mem;
+			end
 
-			// update MEM/WB control signals
+			// update MEM/WB pipeline register
 			pc_wb <= pc_mem; rf_rs_wb <= rf_rs_mem; alu_out_wb <= alu_out_mem;
 			rd_wb <= rd_mem;
 
 			// update MEM/WB control signals
-			halt_wb <= halt_mem; wwd_wb <= wwd_mem; new_inst_wb <= new_inst_mem; reg_write_wb <= reg_write_mem; reg_src_wb <= reg_src_mem;
+			if (!mem_data_stall) begin
+				halt_wb <= halt_mem; wwd_wb <= wwd_mem; new_inst_wb <= new_inst_mem; reg_write_wb <= reg_write_mem; reg_src_wb <= reg_src_mem;
+			end else begin
+				halt_wb <= 0; wwd_wb <= 0; new_inst_wb <= 0; reg_write_wb <= 0; reg_src_wb <= 0;
+			end
 
 			// halt
 			halt <= halt_wb;

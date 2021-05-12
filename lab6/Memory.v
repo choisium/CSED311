@@ -40,7 +40,7 @@ module Memory(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, address
 		if(!reset_n)
 			begin
 				count1 <= 0; count2 <= 0;
-				requested_address1 <= 0;
+				requested_address1 <= 0; requested_address2 <= 0; requested_data <= 0;
 				memory[16'h0] <= 16'h9023;
 				memory[16'h1] <= 16'h1;
 				memory[16'h2] <= 16'hffff;
@@ -281,7 +281,7 @@ module Memory(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, address
 				end
 
 				if(write_m2) begin
-					memory[address2] <= data2;				
+					memory[address2] <= data2;
 				end
 			end
 endmodule
