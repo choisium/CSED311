@@ -35,7 +35,8 @@ module Memory(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, address
 	reg [2:0] count1, count2;
 	reg [`WORD_SIZE-1:0] requested_address1, requested_address2, requested_data;
 	
-	assign data2 = read_m2 ? output_data2 : `WORD_SIZE'bz;
+	// assign data2 = read_m2 ? output_data2 : `WORD_SIZE'bz;
+	assign data2 = output_data2;
 	
 	always@(posedge clk)
 		if(!reset_n)
@@ -270,11 +271,7 @@ module Memory(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, address
 
 				if(read_m2) begin
 					if (count2 < `MEM_STALL_COUNT - 1) begin
-						if (count2 != 0 && requested_address2 != address2) begin
-							count2 <= 1;
-						end else begin
-							count2 <= count2 + 1;
-						end
+						count2 <= count2 + 1;
 						requested_address2 <= address2;
 						output_data2 <= `WORD_SIZE'bz;
 					end else begin
@@ -289,27 +286,28 @@ module Memory(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, address
 
 				if(write_m2) begin
 					if (count2 < `MEM_STALL_COUNT - 1) begin
-						if (count2 != 0 && requested_address2 != address2) begin
-							count2 <= 1;
-						end else begin
-							count2 <= count2 + 1;
-						end
+						count2 <= count2 + 1;
 						requested_address2 <= address2;
-						if (data2 !== `WORD_SIZE'bz) begin
+						if (count2 == 0) begin
 							requested_data <= data2;
 						end
-						output_data2 <= `WORD_SIZE'bz;
+						output_data2 <= requested_data;
 					end else begin
 						if (requested_address2 != address2) begin
 							requested_address2 <= address2;
 							requested_data <= data2;
-							count2 <= 1;
-							output_data2 <= `WORD_SIZE'bz;
 						end else begin
 							count2 <= 0;
 							memory[requested_address2] <= requested_data;
+							output_data2 <= `WORD_SIZE'bz;
 						end
 					end
 				end
+
 			end
+	always @(*) begin
+		if (!read_m2 && !write_m2) begin
+			output_data2 <= `WORD_SIZE'bz;
+		end
+	end
 endmodule

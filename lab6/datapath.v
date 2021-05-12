@@ -165,13 +165,6 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		end
 	end
 
-	// always @(posedge clk) begin
-	// 	if (mem_data_stall) begin
-	// 		$strobe("mem data stall!, %h", rf_rt_mem);
-	// 		rf_rt_mem <= `WORD_SIZE'bz;
-	// 	end
-	// end
-
 	// instruction memory
 	always @(posedge clk) begin
 		if (!reset_n) begin
