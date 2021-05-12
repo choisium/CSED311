@@ -157,11 +157,17 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 				instr_stall = 0;
 			end
 			
-			if (data2 === `WORD_SIZE'bz) begin
+			if ((read_m2 && data2 === `WORD_SIZE'bz) || (write_m2 && data2 !== `WORD_SIZE'bz)) begin
 				mem_data_stall = 1;
 			end else begin
 				mem_data_stall = 0;
 			end
+		end
+	end
+
+	always @(posedge clk) begin
+		if (mem_data_stall) begin
+			rf_rt_mem <= `WORD_SIZE'bz;
 		end
 	end
 
