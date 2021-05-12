@@ -247,14 +247,18 @@ module Memory(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, address
 			begin
 				if(read_m1) begin
 					if (count1 < `MEM_STALL_COUNT) begin
-						count1 <= count1 + 1;
+						if (count1 != 0 && requested_address1 != address1) begin
+							count1 <= 1;
+						end else begin
+							count1 <= count1 + 1;
+						end
 						requested_address1 <= address1;
 						data1 <= `WORD_SIZE'bz;
 					end else begin
-						count1 <= 0;
 						if (requested_address1 != address1) begin
 							requested_address1 <= address1;
 						end else begin
+							count1 <= 0;
 							data1 <= memory[requested_address1];
 						end
 					end
