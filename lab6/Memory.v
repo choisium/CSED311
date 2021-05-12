@@ -291,7 +291,6 @@ module Memory(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, address
 					if (count2 < `MEM_STALL_COUNT - 1) begin
 						if (count2 != 0 && requested_address2 != address2) begin
 							count2 <= 1;
-							output_data2 <= `WORD_SIZE'bz;
 						end else begin
 							count2 <= count2 + 1;
 						end
@@ -304,6 +303,8 @@ module Memory(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, address
 						if (requested_address2 != address2) begin
 							requested_address2 <= address2;
 							requested_data <= data2;
+							count2 <= 1;
+							output_data2 <= `WORD_SIZE'bz;
 						end else begin
 							count2 <= 0;
 							memory[requested_address2] <= requested_data;
