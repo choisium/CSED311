@@ -15,7 +15,7 @@ module Memory(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, address
 	wire read_m1;
 	input [`WORD_SIZE-1:0] address1;
 	wire [`WORD_SIZE-1:0] address1;
-	output data1;
+	output [`WORD_SIZE-1:0] data1;
 	reg [`WORD_SIZE-1:0] data1;
 	
 	input read_m2;
@@ -24,7 +24,7 @@ module Memory(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, address
 	wire write_m2;
 	input [`WORD_SIZE-1:0] address2;
 	wire [`WORD_SIZE-1:0] address2;
-	inout data2;
+	inout [`WORD_SIZE-1:0] data2;
 	wire [`WORD_SIZE-1:0] data2;
 	
 	reg [`WORD_SIZE-1:0] memory [0:`MEMORY_SIZE-1];
@@ -247,14 +247,17 @@ module Memory(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, address
 		else
 			begin
 				if(read_m1) begin
-					if (count1 < `MEM_STALL_COUNT) begin
+					if (count1 < `MEM_STALL_COUNT - 1) begin
 						if (count1 != 0 && requested_address1 != address1) begin
 							count1 <= 1;
+						end else if (count1 == 0 && requested_address1 == address1 && address1 != 0) begin
+							$display("same address!");
+							data1 <= data1;
 						end else begin
 							count1 <= count1 + 1;
+							data1 <= `WORD_SIZE'bz;
 						end
 						requested_address1 <= address1;
-						data1 <= `WORD_SIZE'bz;
 					end else begin
 						if (requested_address1 != address1) begin
 							requested_address1 <= address1;
@@ -266,7 +269,7 @@ module Memory(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, address
 				end
 
 				if(read_m2) begin
-					if (count2 < `MEM_STALL_COUNT) begin
+					if (count2 < `MEM_STALL_COUNT - 1) begin
 						if (count2 != 0 && requested_address2 != address2) begin
 							count2 <= 1;
 						end else begin
