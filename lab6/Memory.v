@@ -28,12 +28,19 @@ module Memory(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, address
 	
 	reg [`WORD_SIZE-1:0] memory [0:`MEMORY_SIZE-1];
 	reg [`WORD_SIZE-1:0] output_data2;
+
+	// count1 for instruction latency
+	// count2 for data latency
+	reg [2:0] count1, count2;
+	reg [`WORD_SIZE-1:0] requested_address1;
 	
-	assign data2 = read_m2?output_data2:`WORD_SIZE'bz;
+	assign data2 = read_m2 ? output_data2 : `WORD_SIZE'bz;
 	
 	always@(posedge clk)
 		if(!reset_n)
 			begin
+				count1 <= 0; count2 <= 0;
+				requested_address1 <= 0;
 				memory[16'h0] <= 16'h9023;
 				memory[16'h1] <= 16'h1;
 				memory[16'h2] <= 16'hffff;
@@ -236,8 +243,30 @@ module Memory(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, address
 			end
 		else
 			begin
-				if(read_m1)data1 <= (write_m2 & address1==address2)?data2:memory[address1];
-				if(read_m2)output_data2 <= memory[address2];
-				if(write_m2)memory[address2] <= data2;															  
+				if(read_m1) begin
+					if (count1 == `MEM_STALL_COUNT - 1) begin
+						// waited enough cycles. return data
+						count1 <= 0;
+						requested_address1 <= address1;
+						data1 <= (write_m2 & address1 == address2) ? data2 : memory[address1];
+					end else begin
+						// if requested address is changed (e.g. by flush), reset count
+						if (requested_address1 != address1) begin
+							count1 <= 0;
+							requested_address1 <= address1;
+						end else begin
+							count1 <= count1 + 1;
+						end
+						data1 <= `WORD_SIZE'bz;
+					end
+				end
+
+				if(read_m2) begin
+					output_data2 <= memory[address2];
+				end
+
+				if(write_m2) begin
+					memory[address2] <= data2;				
+				end
 			end
 endmodule

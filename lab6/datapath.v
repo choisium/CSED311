@@ -94,6 +94,9 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 
 	// halt
 	reg halt;
+	
+	// memory stall
+	reg instr_stall;
 
 	initial begin
 		pc <= 0;
@@ -129,6 +132,9 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 
 		// halt
 		halt <= 0;
+
+		// memory stall
+		instr_stall <= 0;
 	end
 
 
@@ -139,15 +145,26 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 	assign read_m2 = mem_read_mem;
 	assign address2 = alu_out_mem;
 	assign data2 = read_m2? `WORD_SIZE'bz: rf_rt_mem;
+	
+	always @(*) begin
+		if (!reset_n) begin
+			instr_stall = 0;
+		end else begin
+			if (data1 === `WORD_SIZE'bz) begin
+				instr_stall = 1;
+			end else begin
+				instr_stall = 0;
+			end
+		end
+	end
 
 	// instruction memory
 	always @(posedge clk) begin
 		if (!reset_n) begin
 			instr <= 0;
-		end else if(stall) begin 
+		end else if(stall || instr_stall) begin
 			instr <= instr;
-		end
-		else begin
+		end else begin
 			instr <= data1;
 		end
 	end
@@ -165,7 +182,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 
 	// set flush
 	always @(*) begin
-		fcond1 = (actual_pc != pc_id);
+		fcond1 = (pc_id != `WORD_SIZE'hffff) && (actual_pc != pc_id);
 		fcond2 = (pc_id != 0);
 		fcond3 = (pc_ex != `WORD_SIZE'hffff);
 
@@ -217,17 +234,17 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 		end
 		else begin
 			// update pc
-			if(stall) begin
+			if(stall || (!flush && instr_stall)) begin
 				pc <= pc;
 			end else begin
 				pc <= pc_nxt;
 			end
 
 			// update IF/ID pipeline register (instr from data)
-			if(!flush & !stall) begin
+			if(!flush & !stall & !instr_stall) begin
 				pc_id <= pc;
 				new_inst_id <= new_inst_if;
-			end else if(stall) begin // stall
+			end else if(stall || (!flush && instr_stall)) begin // stall
 				pc_id <= pc_id;
 				new_inst_id <= new_inst_id;
 			end	else begin // flush
@@ -236,7 +253,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 			end
 			
 			// update ID/EX pipeline register
-			if(!flush & !stall) begin
+			if(!flush & !stall & !instr_stall) begin
 				target <= instr[11:0]; pc_ex <= pc_id; rf_rs_ex <= rf_rs; rf_rt_ex <= rf_rt; immed_ex <= immed_id;
 				rs_ex <= instr[11:10]; rt_ex <= instr[9:8]; rd_ex <= rd_id;
 			end else begin
@@ -246,7 +263,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, addre
 			end
 			
 			// update EX control
-			if(!flush && !stall && pc_id != `WORD_SIZE'hffff) begin
+			if(!flush && !stall && !instr_stall && pc_id != `WORD_SIZE'hffff) begin
 				alu_src_ex <= alu_src_id; branch_ex <= branch_id; pc_src_ex <= pc_src_id; 
 				alu_branch_type_ex <= alu_branch_type_id; alu_func_code_ex <= alu_func_code_id;
 				mem_read_ex <= mem_read_id; mem_write_ex <= mem_write_id;
