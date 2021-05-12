@@ -266,26 +266,22 @@ module Memory(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, address
 				end
 
 				if(read_m2) begin
-					if (count2 == `MEM_STALL_COUNT - 1) begin
-						// waited enough cycles. return data
-						count2 <= 0;
-						requested_address2 <= address2;
-						if (count2 == 0) begin
-							output_data2 <= memory[address2];
-						end else begin
-							output_data2 <= memory[requested_address2];
-						end
-					end else begin
-						// if requested address is changed (e.g. by flush), reset count
-						if (requested_address2 != address2) begin
-							count1 <= 0;
-							requested_address2 <= address2;
+					if (count2 < `MEM_STALL_COUNT) begin
+						if (count2 != 0 && requested_address2 != address2) begin
+							count2 <= 1;
 						end else begin
 							count2 <= count2 + 1;
 						end
+						requested_address2 <= address2;
 						output_data2 <= `WORD_SIZE'bz;
+					end else begin
+						if (requested_address2 != address2) begin
+							requested_address2 <= address2;
+						end else begin
+							count2 <= 0;
+							output_data2 <= memory[requested_address2];
+						end
 					end
-					// output_data2 <= memory[address2];
 				end
 
 				if(write_m2) begin
