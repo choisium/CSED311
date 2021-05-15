@@ -301,13 +301,8 @@ module datapath(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, wr
 				pc_mem <= pc_ex; rf_rs_mem <= rf_rs_forwarded; rf_rt_mem <= rf_rt_ex; alu_out_mem <= alu_out_ex;
 				rd_mem <= rd_ex;
 			end else begin
-				pc_mem <= pc_mem; rf_rs_mem <= rf_rs_mem; alu_out_mem <= alu_out_mem;
+				pc_mem <= pc_mem; rf_rs_mem <= rf_rs_mem; rf_rt_mem <= rf_rt_mem; alu_out_mem <= alu_out_mem;
 				rd_mem <= rd_mem;
-				if (write_m2) begin
-					rf_rt_mem <= `WORD_SIZE'bz;
-				end else begin
-					rf_rt_mem <= rf_rt_mem;
-				end
 			end
 
 			// update EX/MEM control signals
