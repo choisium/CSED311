@@ -5,7 +5,8 @@
 `define WORD_SIZE 16	//	instead of 2^16 words to reduce memory
 			//	requirements in the Active-HDL simulator 
 
-module Memory(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, address2, data2);
+module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2);
+
 	input clk;
 	wire clk;
 	input reset_n;
@@ -17,6 +18,8 @@ module Memory(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, address
 	wire [`WORD_SIZE-1:0] address1;
 	output [`WORD_SIZE-1:0] data1;
 	reg [`WORD_SIZE-1:0] data1;
+	output inputReady1;
+	reg inputReady1;
 	
 	input read_m2;
 	wire read_m2;
@@ -26,6 +29,10 @@ module Memory(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, address
 	wire [`WORD_SIZE-1:0] address2;
 	inout [`WORD_SIZE-1:0] data2;
 	wire [`WORD_SIZE-1:0] data2;
+	output inputReady2;
+	reg inputReady2;
+	output ackOutput2;
+	reg ackOutput2;
 	
 	reg [`WORD_SIZE-1:0] memory [0:`MEMORY_SIZE-1];
 	reg [`WORD_SIZE-1:0] output_data2;
@@ -43,6 +50,7 @@ module Memory(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, address
 				count1 <= 0; count2 <= 0;
 				requested_address1 <= 0; requested_address2 <= 0; requested_data <= 0;
 				output_data2 <= 0;
+				inputReady1 <= 0; inputReady2 <= 0; ackOutput2 <= 0;
 
 				memory[16'h0] <= 16'h9023; // JMP ENTRY
 				memory[16'h1] <= 16'h1;
@@ -247,48 +255,71 @@ module Memory(clk, reset_n, read_m1, address1, data1, read_m2, write_m2, address
 		else
 			begin
 				if(read_m1) begin
-					if (count1 < `MEM_STALL_COUNT - 1) begin
+					if (count1 == 0 && requested_address1 == address1 && inputReady1 == 1) begin
+						// data already given but address is not changed. do nothing
+					end else if (count1 < `MEM_STALL_COUNT - 1) begin
 						if (count1 != 0 && requested_address1 != address1) begin
+							// address changed. reset count to 1
 							count1 <= 1;
-						end else if (count1 == 0 && requested_address1 == address1 && address1 != 0) begin
-							$display("same address!");
-							data1 <= data1;
 						end else begin
+							// increase count
 							count1 <= count1 + 1;
-							data1 <= `WORD_SIZE'bz;
 						end
+						inputReady1 <= 0;
 						requested_address1 <= address1;
 					end else begin
 						if (requested_address1 != address1) begin
+							// address changed. reset count to 1
+							count1 <= 1;
 							requested_address1 <= address1;
 						end else begin
+							// count is full. return data and reset count
 							count1 <= 0;
-							data1 <= memory[requested_address1];
+							inputReady1 <= 1;
+							data1 <= memory[address1];
 						end
 					end
 				end
-
+				
 				if(read_m2) begin
 					if (count2 < `MEM_STALL_COUNT - 1) begin
-						if (count2 != 0 && requested_address2 != address2) begin
-							count2 <= 1;
-						end else begin
-							count2 <= count2 + 1;
-						end
+						// increase count
+						count2 <= count2 + 1;
+						inputReady2 <= 0;
 						requested_address2 <= address2;
-						output_data2 <= `WORD_SIZE'bz;
 					end else begin
 						if (requested_address2 != address2) begin
+							// address changed. reset count to 1
+							count2 <= 1;
 							requested_address2 <= address2;
 						end else begin
+							// count is full. return data and reset count
 							count2 <= 0;
-							output_data2 <= memory[requested_address2];
+							inputReady2 <= 1;
+							output_data2 <= memory[address2];
 						end
 					end
 				end
 
 				if(write_m2) begin
-					memory[address2] <= data2;
+					if (count2 < `MEM_STALL_COUNT - 1) begin
+						// increase count
+						count2 <= count2 + 1;
+						ackOutput2 <= 0;
+						requested_address2 <= address2;
+					end else begin
+						if (requested_address2 != address2) begin
+							// address changed. reset count to 1
+							count2 <= 1;
+							requested_address2 <= address2;
+						end else begin
+							// count is full. write data and reset count
+							count2 <= 0;
+							ackOutput2 <= 1;
+							memory[address2] <= data2;
+						end
+					end
 				end
 			end
+
 endmodule
