@@ -47,5 +47,7 @@
 
 `define	WORD_SIZE	16			
 `define	NUM_REGS	4
-`define IDX_SIZE 5
-`define TAG_SIZE 16-`IDX_SIZE
+`define IDX_SIZE    5
+`define TAG_SIZE    16-`IDX_SIZE
+
+`define MEM_STALL_COUNT 2
