@@ -6,7 +6,7 @@
 `define TESTID_SIZE 5
 
 `define MEM_REQ_SIZE  82
-`define MEM_DATA_SIZE 17
+`define MEM_DATA_SIZE 65
 
 module cpu_TB();
 	reg reset_n;    // active-low RESET signal

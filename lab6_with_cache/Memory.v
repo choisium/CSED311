@@ -283,7 +283,10 @@ module Memory(clk, reset_n,
 							// count is full. return data and reset count
 							count1 <= 0;
 							inputReady1 <= 1;
-							data1 <= memory[mem_req1[`MEM_REQ_ADDR]];
+							data1[`BLOCK_WORD_1] <= memory[mem_req1[`MEM_REQ_ADDR]+`WORD_SIZE'b00];
+							data1[`BLOCK_WORD_2] <= memory[mem_req1[`MEM_REQ_ADDR]+`WORD_SIZE'b01];
+							data1[`BLOCK_WORD_3] <= memory[mem_req1[`MEM_REQ_ADDR]+`WORD_SIZE'b10];
+							data1[`BLOCK_WORD_4] <= memory[mem_req1[`MEM_REQ_ADDR]+`WORD_SIZE'b11];
 						end
 					end
 				end

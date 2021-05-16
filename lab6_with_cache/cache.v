@@ -33,7 +33,7 @@ module cache(clk, reset_n, cpu_req1, cpu_res1, cpu_req2, cpu_res2, mem_req1, mem
     assign mem_req2[`MEM_REQ_DATA] = cpu_req2[`CPU_REQ_DATA];
 
     assign cpu_res1[`CPU_RES_READY] = mem_data1[`MEM_DATA_READY];
-    assign cpu_res1[`CPU_RES_DATA] = mem_data1[`MEM_DATA];
+    assign cpu_res1[`CPU_RES_DATA] = mem_data1[`BLOCK_WORD_1];
 
     always @(*) begin
         $display("CPU_REQ1 - valid : %h, rw : %h, address : %h, data : %h", cpu_req1[`CPU_REQ_VALID], cpu_req1[`CPU_REQ_RW], cpu_req1[`CPU_REQ_ADDR], cpu_req1[`CPU_REQ_DATA]);
