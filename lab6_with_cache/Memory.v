@@ -1,24 +1,23 @@
 `timescale 1ns/1ns
 `include "opcodes.v"
+`include "cache_def.v"
 `define PERIOD1 100
 `define MEMORY_SIZE 256	//	size of memory is 2^8 words (reduced size)
 `define WORD_SIZE 16	//	instead of 2^16 words to reduce memory
 			//	requirements in the Active-HDL simulator 
 
-module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2);
+module Memory(clk, reset_n,
+			read_m2, write_m2, address2, data2, inputReady2, ackOutput2,
+			mem_req1, mem_req2, mem_data1, mem_data2);
 
 	input clk;
 	wire clk;
 	input reset_n;
 	wire reset_n;
 	
-	input read_m1;
 	wire read_m1;
-	input [`WORD_SIZE-1:0] address1;
 	wire [`WORD_SIZE-1:0] address1;
-	output [`WORD_SIZE-1:0] data1;
-	reg [`WORD_SIZE-1:0] data1;
-	output inputReady1;
+	reg [4*`WORD_SIZE-1:0] data1;
 	reg inputReady1;
 	
 	input read_m2;
@@ -44,6 +43,14 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 	
 	assign data2 = read_m2 ? output_data2 : `WORD_SIZE'bz;
 	
+	input [`MEM_REQ_SIZE-1:0] mem_req1;
+	input [`MEM_REQ_SIZE-1:0] mem_req2;
+	output [`MEM_DATA_SIZE-1:0] mem_data1;
+	output [`MEM_DATA_SIZE-1:0] mem_data2;
+
+	assign mem_data1[`MEM_DATA_READY] = inputReady1;
+	assign mem_data1[`MEM_DATA] = data1;
+
 	always@(posedge clk)
 		if(!reset_n)
 			begin
@@ -254,11 +261,11 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 			end
 		else
 			begin
-				if(read_m1) begin
-					if (count1 == 0 && requested_address1 == address1 && inputReady1 == 1) begin
+				if(mem_req1[`MEM_REQ_VALID]) begin
+					if (count1 == 0 && requested_address1 == mem_req1[`MEM_REQ_ADDR] && inputReady1 == 1) begin
 						// data already given but address is not changed. do nothing
 					end else if (count1 < `MEM_STALL_COUNT - 1) begin
-						if (count1 != 0 && requested_address1 != address1) begin
+						if (count1 != 0 && requested_address1 != mem_req1[`MEM_REQ_ADDR]) begin
 							// address changed. reset count to 1
 							count1 <= 1;
 						end else begin
@@ -266,17 +273,17 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 							count1 <= count1 + 1;
 						end
 						inputReady1 <= 0;
-						requested_address1 <= address1;
+						requested_address1 <= mem_req1[`MEM_REQ_ADDR];
 					end else begin
-						if (requested_address1 != address1) begin
+						if (requested_address1 != mem_req1[`MEM_REQ_ADDR]) begin
 							// address changed. reset count to 1
 							count1 <= 1;
-							requested_address1 <= address1;
+							requested_address1 <= mem_req1[`MEM_REQ_ADDR];
 						end else begin
 							// count is full. return data and reset count
 							count1 <= 0;
 							inputReady1 <= 1;
-							data1 <= memory[address1];
+							data1 <= memory[mem_req1[`MEM_REQ_ADDR]];
 						end
 					end
 				end
