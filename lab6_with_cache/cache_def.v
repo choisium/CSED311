@@ -30,27 +30,19 @@
 // data structures for cache controller<->memory interface
 
 // Cache result (cache controller->cpu)
-`define CPU_RES_SIZE 17
-`define CPU_RES_READY 16        // result is ready
+`define CPU_RES_SIZE 18
+`define CPU_RES_READY 17        // input ready
+`define CPU_RES_ACK 16          // ackOutput
 `define CPU_RES_DATA 15:0       // 16-bit data
 
 // memory controller response (memory -> cache controller)
-`define MEM_DATA_SIZE 65
-`define MEM_DATA_READY 64       // data is ready
-`define MEM_DATA 63:0           // 64-bit read back data
+`define MEM_DATA_SIZE 66
+`define MEM_DATA_READY 65        // input ready
+`define MEM_DATA_ACK 64          // ackOutput
+`define MEM_DATA 63:0            // 64-bit read back data
 
 // cache line : 4 word
 `define BLOCK_WORD_1 63:48
 `define BLOCK_WORD_2 47:32
 `define BLOCK_WORD_3 31:16
 `define BLOCK_WORD_4 15:0
-
-
-
-
-/* 
-// memory controller response (memory -> cache controller)
-`define MEM_DATA_SIZE 65
-`define MEM_DATA_READY 64       // data is ready
-`define MEM_DATA 63:0           // 64-bit read back data
- */
