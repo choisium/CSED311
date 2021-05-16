@@ -44,22 +44,6 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 		.is_halted(is_halted)
 	);
 
-	reg valid_m1, valid_m2;
-	always @(*) begin
-		valid_m1 = read_m1;
-		valid_m2 = read_m2 | write_m2;
-	end
-
-	cache Cache(
-		.clk(clk),
-		.reset_n(reset_n),
-		.cpu_req1({valid_m1, 1'b0, address1, data1}),
-		.cpu_res1({inputReady1, data1}),
-		.cpu_req2({valid_m2, !read_m1 & write_m2, address2, data2}),
-		.cpu_res2({inputReady2, data2}),
-		.ackOutput2(ackOutput2)
-	);
-
 endmodule
 
 
