@@ -23,6 +23,7 @@ module cpu_TB();
 	// wire inputReady2;
 	// wire ackOutput2;
 
+
 	// for debuging purpose
 	wire [`WORD_SIZE-1:0] num_inst;		// number of instruction during execution
 	wire [`WORD_SIZE-1:0] output_port;	// this will be used for a "WWD" instruction

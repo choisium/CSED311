@@ -76,5 +76,3 @@ module cpu(clk, reset_n,
 	);
 
 endmodule
-
-
