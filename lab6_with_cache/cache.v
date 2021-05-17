@@ -1,64 +1,54 @@
 `include "opcodes.v"
 `include "cache_def.v"
 
-module cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_inputReady1, 
-        cpu_read_m2, cpu_write_m2, cpu_address2, cpu_data2, cpu_inputReady2, cpu_ackOutput2,
-        read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2);
+module cache(clk, reset_n, cpu_req1, cpu_res1, cpu_req2, cpu_res2, mem_req1, mem_req2, mem_data1, mem_data2);
 
 	input clk;
 	input reset_n;
 
-    // I/O between CPU
-    input cpu_read_m1;
-	input [`WORD_SIZE-1:0] cpu_address1;
-	input cpu_read_m2;
-	input cpu_write_m2;
-	input [`WORD_SIZE-1:0] cpu_address2;
+    // CPU request input (CPU->cache)
+    input [`CPU_REQ_SIZE-1:0] cpu_req1;
+    input [`CPU_REQ_SIZE-1:0] cpu_req2;
 
-	output [`WORD_SIZE-1:0] cpu_data1;
-	inout [`WORD_SIZE-1:0] cpu_data2;
-    reg [`WORD_SIZE-1:0] cpu_data2;
+    // cache result (cache->CPU)
+    output [`CPU_RES_SIZE-1:0] cpu_res1;
+    output [`CPU_RES_SIZE-1:0] cpu_res2;
 
-	output cpu_inputReady1;
-	output cpu_inputReady2;
-    output cpu_ackOutput2;
+    // memory request (cache->memory)
+    output [`MEM_REQ_SIZE-1:0] mem_req1;
+    output [`MEM_REQ_SIZE-1:0] mem_req2;
 
-    // I/O between Memory
-    output read_m1;
-	output [`WORD_SIZE-1:0] address1;
-	output read_m2;
-	output write_m2;
-	output [`WORD_SIZE-1:0] address2;
+    // memory response (memory->cache)
+    input [`MEM_DATA_SIZE-1:0] mem_data1; 
+    input [`MEM_DATA_SIZE-1:0] mem_data2;
 
-	input [4*`WORD_SIZE-1:0] data1;
-	inout [4*`WORD_SIZE-1:0] data2;
+    assign mem_req1[`MEM_REQ_VALID] = cpu_req1[`CPU_REQ_VALID];
+    assign mem_req1[`MEM_REQ_RW] = cpu_req1[`CPU_REQ_RW];
+    assign mem_req1[`MEM_REQ_ADDR] = cpu_req1[`CPU_REQ_ADDR];
+    assign mem_req1[`MEM_REQ_DATA] = 0;
 
-	input inputReady1;
-	input inputReady2;
-	input ackOutput2;
+    assign mem_req2[`MEM_REQ_VALID] = cpu_req2[`CPU_REQ_VALID];
+    assign mem_req2[`MEM_REQ_RW] = cpu_req2[`CPU_REQ_RW];
+    assign mem_req2[`MEM_REQ_ADDR] = cpu_req2[`CPU_REQ_ADDR];
 
-    // Assign 
-    assign read_m1 = cpu_read_m1;
-    assign address1 = cpu_address1;
-    assign read_m2 = cpu_read_m2;
-    assign write_m2 = cpu_write_m2;
-    assign address2 = cpu_address2;
+    assign mem_req2[`BLOCK_WORD_1] = cpu_req2[`CPU_REQ_DATA];
+    assign mem_req2[`BLOCK_WORD_2] = cpu_req2[`CPU_REQ_DATA];
+    assign mem_req2[`BLOCK_WORD_3] = cpu_req2[`CPU_REQ_DATA];
+    assign mem_req2[`BLOCK_WORD_4] = cpu_req2[`CPU_REQ_DATA];
 
-    assign cpu_data1 = data1[`BLOCK_WORD_1];
-    
-    reg [`WORD_SIZE-1:0] temp_1;
-    reg [4*`WORD_SIZE-1:0] temp_2;
+    assign cpu_res1[`CPU_RES_READY] = mem_data1[`MEM_DATA_READY];
+    assign cpu_res2[`CPU_RES_ACK] = mem_data1[`MEM_DATA_ACK];
+    assign cpu_res1[`CPU_RES_DATA] = mem_data1[`BLOCK_WORD_1];
 
-    assign cpu_data2 = cpu_read_m2 ? temp_1 : `WORD_SIZE'bz;
-    assign data2 = read_m2 ? 4*`WORD_SIZE'bz  : temp_2;
+    assign cpu_res2[`CPU_RES_READY] = mem_data2[`MEM_DATA_READY];
+    assign cpu_res2[`CPU_RES_ACK] = mem_data2[`MEM_DATA_ACK];
+    assign cpu_res2[`CPU_RES_DATA] = mem_data2[`BLOCK_WORD_1];
 
-    always @(*) begin
-        if(read_m2) temp_1 = data2[`BLOCK_WORD_1];
-        if(!cpu_read_m2) temp_2 = {4{cpu_data2}};
-    end
-
-    assign cpu_inputReady1 = inputReady1;
-    assign cpu_inputReady2 = inputReady2;
-    assign cpu_ackOutput2 = ackOutput2;
+    // always @(*) begin
+    //     $display("CPU_REQ1 - valid : %h, rw : %h, address : %h, data : %h", cpu_req1[`CPU_REQ_VALID], cpu_req1[`CPU_REQ_RW], cpu_req1[`CPU_REQ_ADDR], cpu_req1[`CPU_REQ_DATA]);
+    //     $display("CPU_REQ1 - valid : %h, rw : %h, address : %h, data : %h", cpu_req1[`CPU_REQ_VALID], cpu_req1[`CPU_REQ_RW], cpu_req1[`CPU_REQ_ADDR], cpu_req1[`CPU_REQ_DATA]);
+    //     $display("CPU_RES1 - ready : %h, data : %h", cpu_res1[`CPU_RES_READY], cpu_res1[`CPU_RES_DATA]);
+    //     $display("CPU_RES2 - ready : %h, data : %h", cpu_res2[`CPU_RES_READY], cpu_res2[`CPU_RES_DATA]);
+    // end
 
 endmodule
