@@ -6,7 +6,7 @@
 `define WORD_SIZE 16	//	instead of 2^16 words to reduce memory
 			//	requirements in the Active-HDL simulator 
 
-module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2);
+module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2, valid1, valid2);
 
 	input clk;
 	wire clk;
@@ -37,6 +37,9 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 	
 	reg [`WORD_SIZE-1:0] memory [0:`MEMORY_SIZE-1];
 	reg [4*`WORD_SIZE-1:0] output_data2;
+
+	input valid1, valid2;
+	wire valid1, valid2;
 
 	// count1 for instruction latency
 	// count2 for data latency
@@ -255,7 +258,7 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 			end
 		else
 			begin
-				if(read_m1) begin
+				if(valid1 && read_m1) begin
 					if (count1 == 0 && requested_address1 == address1 && inputReady1 == 1) begin
 						// data already given but address is not changed. do nothing
 					end else if (count1 < `MEM_STALL_COUNT - 1) begin
@@ -285,7 +288,7 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 					end
 				end
 				
-				if(read_m2) begin
+				if(valid2 && read_m2) begin
 					if (count2 < `MEM_STALL_COUNT - 1) begin
 						// increase count
 						count2 <= count2 + 1;
@@ -309,7 +312,7 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 					end
 				end
 
-				if(write_m2) begin
+				if(valid2 && write_m2) begin
 					if (count2 < `MEM_STALL_COUNT - 1) begin
 						// increase count
 						count2 <= count2 + 1;

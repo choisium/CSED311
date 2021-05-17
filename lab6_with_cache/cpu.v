@@ -4,7 +4,9 @@
 `include "datapath.v"
 `include "cache.v"
 
-module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2, num_inst, output_port, is_halted);
+module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, 
+		read_m2, write_m2, address2, data2, inputReady2, ackOutput2, 
+		num_inst, output_port, is_halted, valid1, valid2);
 
 	input clk;
 	input reset_n;
@@ -21,6 +23,8 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 	input inputReady1;
 	input inputReady2;
 	input ackOutput2;
+
+	output valid1, valid2;
 
 	output [`WORD_SIZE-1:0] num_inst;
 	output [`WORD_SIZE-1:0] output_port;
@@ -39,6 +43,14 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 	wire cpu_inputReady2;
 	wire cpu_ackOutput2;
 
+	wire cpu_valid1;
+	wire cpu_valid2;
+	wire valid1;
+	wire valid2;
+
+	assign cpu_valid1 = cpu_read_m1;
+	assign cpu_valid2 = cpu_read_m2 | cpu_write_m2;
+	
 	//TODO: implement pipelined CPU
 	datapath Datapath(
 		.clk(clk),
@@ -81,7 +93,11 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 		.address2(address2),
 		.data2(data2),
 		.inputReady2(inputReady2),
-		.ackOutput2(ackOutput2)
+		.ackOutput2(ackOutput2),
+		.cpu_valid1(cpu_valid1),
+		.cpu_valid2(cpu_valid2),
+		.valid1(valid1),
+		.valid2(valid2)
 	);
 
 
