@@ -50,4 +50,5 @@
 `define IDX_SIZE    5
 `define TAG_SIZE    16-`IDX_SIZE
 
-`define MEM_STALL_COUNT 2
+`define MEM_STALL_COUNT 6
+

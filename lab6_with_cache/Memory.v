@@ -1,56 +1,53 @@
 `timescale 1ns/1ns
 `include "opcodes.v"
+`include "cache_def.v"
 `define PERIOD1 100
 `define MEMORY_SIZE 256	//	size of memory is 2^8 words (reduced size)
 `define WORD_SIZE 16	//	instead of 2^16 words to reduce memory
 			//	requirements in the Active-HDL simulator 
 
-module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2);
+module Memory(clk, reset_n, mem_req1, mem_req2, mem_data1, mem_data2);
 
 	input clk;
 	wire clk;
 	input reset_n;
 	wire reset_n;
 	
-	input read_m1;
-	wire read_m1;
-	input [`WORD_SIZE-1:0] address1;
-	wire [`WORD_SIZE-1:0] address1;
-	output [`WORD_SIZE-1:0] data1;
-	reg [`WORD_SIZE-1:0] data1;
-	output inputReady1;
+	reg [4*`WORD_SIZE-1:0] data1;
 	reg inputReady1;
 	
-	input read_m2;
-	wire read_m2;
-	input write_m2;
-	wire write_m2;
-	input [`WORD_SIZE-1:0] address2;
-	wire [`WORD_SIZE-1:0] address2;
-	inout [`WORD_SIZE-1:0] data2;
-	wire [`WORD_SIZE-1:0] data2;
-	output inputReady2;
+	reg [4*`WORD_SIZE-1:0] output_data2;
 	reg inputReady2;
-	output ackOutput2;
 	reg ackOutput2;
-	
+
 	reg [`WORD_SIZE-1:0] memory [0:`MEMORY_SIZE-1];
-	reg [`WORD_SIZE-1:0] output_data2;
 
 	// count1 for instruction latency
 	// count2 for data latency
 	reg [2:0] count1, count2;
 	reg [`WORD_SIZE-1:0] requested_address1, requested_address2, requested_data;
 	
-	assign data2 = read_m2 ? output_data2 : `WORD_SIZE'bz;
+	//assign data2 = read_m2 ? output_data2 : `WORD_SIZE'bz;
 	
+	input [`MEM_REQ_SIZE-1:0] mem_req1;
+	input [`MEM_REQ_SIZE-1:0] mem_req2;
+	output [`MEM_DATA_SIZE-1:0] mem_data1;
+	output [`MEM_DATA_SIZE-1:0] mem_data2;
+
+	assign mem_data1[`MEM_DATA_READY] = inputReady1;
+	assign mem_data1[`MEM_DATA_ACK] = 1'b0;
+	assign mem_data1[`MEM_DATA] = data1;
+
+	assign mem_data2[`MEM_DATA_READY] = inputReady2;
+	assign mem_data2[`MEM_DATA_ACK] = ackOutput2;
+	assign mem_data2[`MEM_DATA] = output_data2;
+
 	always@(posedge clk)
 		if(!reset_n)
 			begin
 				count1 <= 0; count2 <= 0;
 				requested_address1 <= 0; requested_address2 <= 0; requested_data <= 0;
-				output_data2 <= 0;
-				inputReady1 <= 0; inputReady2 <= 0; ackOutput2 <= 0;
+				output_data2 <= 0; inputReady1 <= 0; inputReady2 <= 0; ackOutput2 <= 0;
 
 				memory[16'h0] <= 16'h9023; // JMP ENTRY
 				memory[16'h1] <= 16'h1;
@@ -254,11 +251,12 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 			end
 		else
 			begin
-				if(read_m1) begin
-					if (count1 == 0 && requested_address1 == address1 && inputReady1 == 1) begin
+				// instr memory read
+				if(mem_req1[`MEM_REQ_VALID] && !mem_req1[`MEM_REQ_RW]) begin
+					if (count1 == 0 && requested_address1 == mem_req1[`MEM_REQ_ADDR] && inputReady1 == 1) begin
 						// data already given but address is not changed. do nothing
 					end else if (count1 < `MEM_STALL_COUNT - 1) begin
-						if (count1 != 0 && requested_address1 != address1) begin
+						if (count1 != 0 && requested_address1 != mem_req1[`MEM_REQ_ADDR]) begin
 							// address changed. reset count to 1
 							count1 <= 1;
 						end else begin
@@ -266,57 +264,68 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 							count1 <= count1 + 1;
 						end
 						inputReady1 <= 0;
-						requested_address1 <= address1;
+						requested_address1 <= mem_req1[`MEM_REQ_ADDR];
 					end else begin
-						if (requested_address1 != address1) begin
+						if (requested_address1 != mem_req1[`MEM_REQ_ADDR]) begin
 							// address changed. reset count to 1
 							count1 <= 1;
-							requested_address1 <= address1;
+							requested_address1 <= mem_req1[`MEM_REQ_ADDR];
 						end else begin
 							// count is full. return data and reset count
 							count1 <= 0;
 							inputReady1 <= 1;
-							data1 <= memory[address1];
+							data1[`BLOCK_WORD_1] <= memory[mem_req1[`MEM_REQ_ADDR]+`WORD_SIZE'b00];
+							data1[`BLOCK_WORD_2] <= memory[mem_req1[`MEM_REQ_ADDR]+`WORD_SIZE'b01];
+							data1[`BLOCK_WORD_3] <= memory[mem_req1[`MEM_REQ_ADDR]+`WORD_SIZE'b10];
+							data1[`BLOCK_WORD_4] <= memory[mem_req1[`MEM_REQ_ADDR]+`WORD_SIZE'b11];
 						end
 					end
 				end
 				
-				if(read_m2) begin
+				// data memory read
+				if(mem_req2[`MEM_REQ_VALID] && !mem_req2[`MEM_REQ_RW]) begin
 					if (count2 < `MEM_STALL_COUNT - 1) begin
 						// increase count
 						count2 <= count2 + 1;
 						inputReady2 <= 0;
-						requested_address2 <= address2;
+						requested_address2 <= mem_req2[`MEM_REQ_ADDR];
 					end else begin
-						if (requested_address2 != address2) begin
+						if (requested_address2 != mem_req2[`MEM_REQ_ADDR]) begin
 							// address changed. reset count to 1
 							count2 <= 1;
-							requested_address2 <= address2;
+							requested_address2 <= mem_req2[`MEM_REQ_ADDR];
 						end else begin
 							// count is full. return data and reset count
 							count2 <= 0;
 							inputReady2 <= 1;
-							output_data2 <= memory[address2];
+							output_data2[`BLOCK_WORD_1] <= memory[mem_req2[`MEM_REQ_ADDR]+`WORD_SIZE'b00];
+							output_data2[`BLOCK_WORD_2] <= memory[mem_req2[`MEM_REQ_ADDR]+`WORD_SIZE'b01];
+							output_data2[`BLOCK_WORD_3] <= memory[mem_req2[`MEM_REQ_ADDR]+`WORD_SIZE'b10];
+							output_data2[`BLOCK_WORD_4] <= memory[mem_req2[`MEM_REQ_ADDR]+`WORD_SIZE'b11];
 						end
 					end
 				end
 
-				if(write_m2) begin
+				// data memory write
+				if(mem_req2[`MEM_REQ_VALID] && mem_req2[`MEM_REQ_RW]) begin
 					if (count2 < `MEM_STALL_COUNT - 1) begin
 						// increase count
 						count2 <= count2 + 1;
 						ackOutput2 <= 0;
-						requested_address2 <= address2;
+						requested_address2 <= mem_req2[`MEM_REQ_ADDR];
 					end else begin
-						if (requested_address2 != address2) begin
+						if (requested_address2 != mem_req2[`MEM_REQ_ADDR]) begin
 							// address changed. reset count to 1
 							count2 <= 1;
-							requested_address2 <= address2;
+							requested_address2 <= mem_req2[`MEM_REQ_ADDR];
 						end else begin
 							// count is full. write data and reset count
 							count2 <= 0;
 							ackOutput2 <= 1;
-							memory[address2] <= data2;
+							memory[mem_req2[`MEM_REQ_ADDR]+`WORD_SIZE'b00] <= mem_req2[`BLOCK_WORD_1];
+							// memory[mem_req2[`MEM_REQ_ADDR]+`WORD_SIZE'b01] <= mem_req2[`BLOCK_WORD_2];
+							// memory[mem_req2[`MEM_REQ_ADDR]+`WORD_SIZE'b10] <= mem_req2[`BLOCK_WORD_3];
+							// memory[mem_req2[`MEM_REQ_ADDR]+`WORD_SIZE'b11] <= mem_req2[`BLOCK_WORD_4];
 						end
 					end
 				end

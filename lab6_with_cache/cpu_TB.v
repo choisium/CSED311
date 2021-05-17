@@ -5,29 +5,41 @@
 `define NUM_TEST 56
 `define TESTID_SIZE 5
 
+`define MEM_REQ_SIZE  82
+`define MEM_DATA_SIZE 66
+
 module cpu_TB();
 	reg reset_n;    // active-low RESET signal
 	reg clk;        // clock signal	
 	
-	wire read_m1;
-	wire [`WORD_SIZE-1:0] address1;
-	wire [`WORD_SIZE-1:0] data1;
-	wire inputReady1;
-	wire read_m2;
-	wire write_m2;
-	wire [`WORD_SIZE-1:0] address2;
-	wire [`WORD_SIZE-1:0] data2;
-	wire inputReady2;
-	wire ackOutput2;
+	// wire read_m1;
+	// wire [`WORD_SIZE-1:0] address1;
+	// wire [`WORD_SIZE-1:0] data1;
+	// wire inputReady1;
+	// wire read_m2;
+	// wire write_m2;
+	// wire [`WORD_SIZE-1:0] address2;
+	// wire [`WORD_SIZE-1:0] data2;
+	// wire inputReady2;
+	// wire ackOutput2;
+
 
 	// for debuging purpose
 	wire [`WORD_SIZE-1:0] num_inst;		// number of instruction during execution
 	wire [`WORD_SIZE-1:0] output_port;	// this will be used for a "WWD" instruction
 	wire is_halted;				// set if the cpu is halted
 
+	// memory request (cache->memory)
+    wire [`MEM_REQ_SIZE-1:0] mem_req1;
+    wire [`MEM_REQ_SIZE-1:0] mem_req2;
+
+    // memory response (memory->cache)
+    wire [`MEM_DATA_SIZE-1:0] mem_data1; 
+    wire [`MEM_DATA_SIZE-1:0] mem_data2;
+
 	// instantiate the unit under test
-	cpu UUT (clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2, num_inst, output_port, is_halted);
-	Memory NUUT(!clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2);
+	cpu UUT (clk, reset_n, num_inst, output_port, is_halted, mem_req1, mem_req2, mem_data1, mem_data2);
+	Memory NUUT(!clk, reset_n, mem_req1, mem_req2, mem_data1, mem_data2);
 
 	// initialize inputs
 	initial begin
