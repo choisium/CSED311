@@ -43,8 +43,8 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 	reg [2:0] count1, count2;
 	reg [`WORD_SIZE-1:0] requested_address1, requested_address2, requested_data;
 	
-	assign data2 = read_m2 ? output_data2 : 4*`WORD_SIZE'bz;
-	
+	assign data2 = read_m2 ? output_data2 : 'bz;
+
 	always@(posedge clk)
 		if(!reset_n)
 			begin

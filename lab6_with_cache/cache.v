@@ -17,7 +17,7 @@ module cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_inputReady1
 
 	output [`WORD_SIZE-1:0] cpu_data1;
 	inout [`WORD_SIZE-1:0] cpu_data2;
-    reg [`WORD_SIZE-1:0] cpu_data2;
+    // reg [`WORD_SIZE-1:0] cpu_data2;
 
 	output cpu_inputReady1;
 	output cpu_inputReady2;
@@ -45,17 +45,9 @@ module cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_inputReady1
     assign address2 = cpu_address2;
 
     assign cpu_data1 = data1[`BLOCK_WORD_1];
-    
-    reg [`WORD_SIZE-1:0] temp_1;
-    reg [4*`WORD_SIZE-1:0] temp_2;
 
-    assign cpu_data2 = cpu_read_m2 ? temp_1 : `WORD_SIZE'bz;
-    assign data2 = read_m2 ? 4*`WORD_SIZE'bz  : temp_2;
-
-    always @(*) begin
-        if(read_m2) temp_1 = data2[`BLOCK_WORD_1];
-        if(!cpu_read_m2) temp_2 = {4{cpu_data2}};
-    end
+    assign data2 = read_m2? 'bz: {4{cpu_data2}};
+    assign cpu_data2 = read_m2 && inputReady2 ? data2[`BLOCK_WORD_1] : 'bz;
 
     assign cpu_inputReady1 = inputReady1;
     assign cpu_inputReady2 = inputReady2;
