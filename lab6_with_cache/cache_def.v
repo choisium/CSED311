@@ -1,11 +1,11 @@
 // data structures for cache tag & data
 
 // tag_read, tag_write
-`define CACHE_TAG_SIZE  15      // cache tag
-`define CACHE_TAG_VALID 14      // valid bit
-`define CACHE_TAG_DIRTY 13      // dirty bit
-`define CACHE_TAG_RECENT 12     // Recently used 
-`define CACHE_TAG       11:0    // tag bits
+`define CACHE_TAG_SIZE  16      // cache tag
+`define CACHE_TAG_VALID 15      // valid bit
+`define CACHE_TAG_DIRTY 14      // dirty bit
+`define CACHE_TAG_RECENT 13     // Recently used 
+`define CACHE_TAG       12:0    // tag bits
 
 // tag_req, data_req
 `define CACHE_REQ_SIZE  3       // cache request
