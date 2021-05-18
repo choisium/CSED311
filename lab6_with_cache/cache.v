@@ -178,7 +178,7 @@ module cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_inputReady1
         endcase
 
         // memory request address (sampled from CPU request)
-        mem_req_addr1 = cpu_address1;
+        mem_req_addr1 = {cpu_address1[15:2], 2'b0};
 
         // memory request data (write)
         mem_req_data1 = data_read;
