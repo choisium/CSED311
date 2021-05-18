@@ -270,6 +270,7 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
     // connect cache tag/data memory
     dm_cache_data cache_data(
         .clk(clk),
+        .reset_n(reset_n),
         .data_req(data_req),
         .data_write_way1(data_write_way1),
         .data_write_way2(data_write_way2),
@@ -279,6 +280,7 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
 
     dm_cache_tag cache_tag(
         .clk(clk),
+        .reset_n(reset_n),
         .tag_req(tag_req),
         .tag_write_way1(tag_write_way1),
         .tag_write_way2(tag_write_way2),
