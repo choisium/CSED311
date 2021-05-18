@@ -132,14 +132,6 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
                     if (tag_read[`CACHE_TAG_VALID] == 1'b0 || tag_read[`CACHE_TAG_DIRTY] == 1'b0)
                         // wait until new block allocated
                         vstate = ALLOCATE;
-                    else begin
-                        // miss with dirty line
-
-                        // write back address
-                        
-                        // wait until write is completed
-                        vstate = WRITE_BACK;
-                    end
                 end
             end
 
@@ -156,16 +148,6 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
                     // update cache line data
                     data_req[`CACHE_REQ_WE] = 1;
                 end
-            end
-
-            // wait for writing back dirty cache line
-            WRITE_BACK: begin
-                
-                // write back is completed
-                /*issue new memory request (allocating a new line)*/
-                valid1 = 1;
-                mem_req_read1 = 1;
-                vstate = ALLOCATE;
             end
         endcase
     end
