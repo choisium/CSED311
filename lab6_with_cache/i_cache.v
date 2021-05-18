@@ -2,10 +2,8 @@
 `include "cache_def.v"
 `include "cache_module.v"
 
-module cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_inputReady1, 
-        cpu_read_m2, cpu_write_m2, cpu_address2, cpu_data2, cpu_inputReady2, cpu_ackOutput2,
-        read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2,
-        cpu_valid1, cpu_valid2, valid1, valid2);
+module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_inputReady1, 
+        read_m1, address1, data1, inputReady1, cpu_valid1, valid1);
 
 	input clk;
 	input reset_n;
@@ -13,37 +11,20 @@ module cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_inputReady1
     // I/O between CPU
     input cpu_read_m1;
 	input [`WORD_SIZE-1:0] cpu_address1;
-	input cpu_read_m2;
-	input cpu_write_m2;
-	input [`WORD_SIZE-1:0] cpu_address2;
-
 	output [`WORD_SIZE-1:0] cpu_data1;
-	inout [`WORD_SIZE-1:0] cpu_data2;
 
 	output cpu_inputReady1;
     wire cpu_ackOutput1;
-	output cpu_inputReady2;
-    output cpu_ackOutput2;
 
     // I/O between Memory
     output read_m1;
 	output [`WORD_SIZE-1:0] address1;
-	output read_m2;
-	output write_m2;
-	output [`WORD_SIZE-1:0] address2;
-
 	input [4*`WORD_SIZE-1:0] data1;
-	inout [4*`WORD_SIZE-1:0] data2;
-
 	input inputReady1;
-	input inputReady2;
-	input ackOutput2;
 
     input cpu_valid1;
-    input cpu_valid2;
     output valid1;
     reg valid1;
-    output valid2;
 
     // Internal reg
     wire cpu_req_rw1;
@@ -62,23 +43,8 @@ module cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_inputReady1
     assign read_m1 = mem_req_read1;
     assign address1 = mem_req_addr1;
 
-    // cpu_res, data2
+    // cpu_res, data1
     assign {cpu_inputReady1, cpu_ackOutput1, cpu_data1} = {cpu_res_inputReady1, 1'b0, cpu_res_data1};
-    
-    // data2
-    assign read_m2 = cpu_read_m2;
-    assign write_m2 = cpu_write_m2;
-    assign address2 = cpu_address2;
-
-    assign data2 = read_m2? 'bz: {4{cpu_data2}};
-    assign cpu_data2 = read_m2 && inputReady2 ? data2[`BLOCK_WORD_1] : 'bz;
-
-
-    assign cpu_inputReady2 = inputReady2;
-    assign cpu_ackOutput2 = ackOutput2;
-
-    // assign valid1 = 1;
-    assign valid2 = 1;
 
     localparam 
         IDLE = 2'b00,
@@ -98,7 +64,6 @@ module cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_inputReady1
     wire [`CACHE_DATA_SIZE-1:0] data_read;  //cache line read data
     reg [`CACHE_DATA_SIZE-1:0] data_write;  //cache line write data
     reg [`CACHE_REQ_SIZE-1:0] data_req;     //data req
-
 
     always @(*) begin
         vstate = rstate;

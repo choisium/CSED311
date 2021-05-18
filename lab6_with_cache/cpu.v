@@ -2,7 +2,8 @@
 `define WORD_SIZE 16    // data and address word size
 
 `include "datapath.v"
-`include "cache.v"
+`include "i_cache.v"
+`include "d_cache.v"
 
 module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, 
 		read_m2, write_m2, address2, data2, inputReady2, ackOutput2, 
@@ -70,13 +71,25 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1,
 		.is_halted(is_halted)
 	);
 
-	cache Cache(
+	instr_cache I_Cache(
 		.clk(clk),
 		.reset_n(reset_n),
 		.cpu_read_m1(cpu_read_m1),
 		.cpu_address1(cpu_address1),
 		.cpu_data1(cpu_data1),
 		.cpu_inputReady1(cpu_inputReady1),
+		
+		.read_m1(read_m1),
+		.address1(address1),
+		.data1(data1),
+		.inputReady1(inputReady1),
+		.cpu_valid1(cpu_valid1),
+		.valid1(valid1)
+	);
+
+	data_cache D_Cache(
+		.clk(clk),
+		.reset_n(reset_n),
 		.cpu_read_m2(cpu_read_m2),
 		.cpu_write_m2(cpu_write_m2),
 		.cpu_address2(cpu_address2),
@@ -84,22 +97,15 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1,
 		.cpu_inputReady2(cpu_inputReady2),
 		.cpu_ackOutput2(cpu_ackOutput2),
 		
-		.read_m1(read_m1),
-		.address1(address1),
-		.data1(data1),
-		.inputReady1(inputReady1),
 		.read_m2(read_m2),
 		.write_m2(write_m2),
 		.address2(address2),
 		.data2(data2),
 		.inputReady2(inputReady2),
 		.ackOutput2(ackOutput2),
-		.cpu_valid1(cpu_valid1),
 		.cpu_valid2(cpu_valid2),
-		.valid1(valid1),
 		.valid2(valid2)
 	);
-
 
 endmodule
 
