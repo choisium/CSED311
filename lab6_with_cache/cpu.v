@@ -7,7 +7,7 @@
 
 module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, 
 		read_m2, write_m2, address2, data2, inputReady2, ackOutput2, 
-		num_inst, output_port, is_halted, valid1, valid2);
+		num_inst, output_port, is_halted, valid2);
 
 	input clk;
 	input reset_n;
@@ -25,7 +25,7 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1,
 	input inputReady2;
 	input ackOutput2;
 
-	output valid1, valid2;
+	output valid2;
 
 	output [`WORD_SIZE-1:0] num_inst;
 	output [`WORD_SIZE-1:0] output_port;
@@ -46,7 +46,6 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1,
 
 	wire cpu_valid1;
 	wire cpu_valid2;
-	wire valid1;
 	wire valid2;
 
 	assign cpu_valid1 = cpu_read_m1;
@@ -83,8 +82,7 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1,
 		.address1(address1),
 		.data1(data1),
 		.inputReady1(inputReady1),
-		.cpu_valid1(cpu_valid1),
-		.valid1(valid1)
+		.cpu_valid1(cpu_valid1)
 	);
 
 	data_cache D_Cache(

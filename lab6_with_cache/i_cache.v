@@ -23,8 +23,6 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
 	input inputReady1;
 
     input cpu_valid1;
-    output valid1;
-    reg valid1;
 
     // Internal reg
     wire cpu_req_rw1;
@@ -32,11 +30,7 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
     reg cpu_res_inputReady1;
 
     reg [`WORD_SIZE-1:0] mem_req_addr1;
-    reg [4*`WORD_SIZE-1:0] mem_req_data1;
     reg mem_req_read1;
-
-    // Internal Assign
-    assign cpu_req_rw1 = !cpu_read_m1;
 
     // Assign 
     // mem_req, data1
@@ -95,10 +89,6 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
         // memory request address (sampled from CPU request)
         mem_req_addr1 = {cpu_address1[15:2], 2'b0};
 
-        // memory request data (write)
-        mem_req_data1 = data_read;
-        mem_req_read1 = 1;
-
         // cpu_res
         cpu_res_inputReady1 = 0;
 
@@ -108,8 +98,6 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
             // Idle State
             IDLE: begin
                 // If CPU request, compare cache tag
-                valid1 = 0;
-
                 if(cpu_valid1)
                     vstate = COMPARE_TAG;
             end
@@ -136,9 +124,6 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
 
                     // new tag
                     tag_write[`CACHE_TAG] = cpu_address1[`WORD_TAG];
-
-                    // cache line is dirty if write
-                    tag_write[`CACHE_TAG_DIRTY] = cpu_req_rw1;
 
                     // generate memory request on miss
                     valid1 = 1;
