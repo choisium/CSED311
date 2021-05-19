@@ -73,15 +73,29 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
     wire DIRTY_way2;
     wire RECENT_way2;
 
-    assign HIT_way1 = cpu_address1[`WORD_TAG] == tag_read_way1[`CACHE_TAG];
+    wire CACHE_HIT;
+    wire CACHE_MISS;
+
+    wire [`WORD_TAG] ADDRESS_TAG;
+    wire ADDRESS_IDX;
+    wire [`WORD_BO] ADDRESS_BO;
+
+    assign ADDRESS_TAG = cpu_address1[`WORD_TAG];
+    assign ADDRESS_IDX = cpu_address1[`WORD_IDX];
+    assign ADDRESS_BO = cpu_address1[`WORD_BO];
+
+    assign HIT_way1 = ADDRESS_TAG == tag_read_way1[`CACHE_TAG];
     assign VALID_way1 = tag_read_way1[`CACHE_TAG_VALID];
     assign DIRTY_way1 = tag_read_way1[`CACHE_TAG_DIRTY];
     assign RECENT_way1 = tag_read_way1[`CACHE_TAG_RECENT];
 
-    assign HIT_way2 = cpu_address1[`WORD_TAG] == tag_read_way2[`CACHE_TAG];
+    assign HIT_way2 = ADDRESS_TAG == tag_read_way2[`CACHE_TAG];
     assign VALID_way2 = tag_read_way2[`CACHE_TAG_VALID];
     assign DIRTY_way2 = tag_read_way2[`CACHE_TAG_DIRTY];
     assign RECENT_way2 = tag_read_way2[`CACHE_TAG_RECENT];
+
+    assign CACHE_HIT = (HIT_way1 && VALID_way1) || (HIT_way2 && VALID_way2);
+    assign CACHE_MISS = !CACHE_HIT;
 
     reg UPDATE_WAY1;    // tag, data will be written in way 1
     reg UPDATE_WAY2;    // tag, data will be written in way 2
@@ -96,14 +110,14 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
 
         // tag read by default, direct map index
         tag_req[`CACHE_REQ_WE] = 0;
-        tag_req[`CACHE_REQ_INDEX] = cpu_address1[`WORD_IDX];
+        tag_req[`CACHE_REQ_INDEX] = ADDRESS_IDX;
 
         // data read by default, direct map index
         data_req[`CACHE_REQ_WE] = 0;
-        data_req[`CACHE_REQ_INDEX] = cpu_address1[`WORD_IDX];
+        data_req[`CACHE_REQ_INDEX] = ADDRESS_IDX;
 
         // read correct word from cache (way 1)
-        case(cpu_address1[`WORD_BO])
+        case(ADDRESS_BO)
             2'b00: data_way1 = data_read_way1[`BLOCK_WORD_1];
             2'b01: data_way1 = data_read_way1[`BLOCK_WORD_2];
             2'b10: data_way1 = data_read_way1[`BLOCK_WORD_3];
@@ -111,7 +125,7 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
         endcase
 
         // read correct word from cache (way 2)
-        case(cpu_address1[`WORD_BO])
+        case(ADDRESS_BO)
             2'b00: data_way2 = data_read_way2[`BLOCK_WORD_1];
             2'b01: data_way2 = data_read_way2[`BLOCK_WORD_2];
             2'b10: data_way2 = data_read_way2[`BLOCK_WORD_3];
@@ -151,7 +165,7 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
                     vstate = CHECK;
                 end else begin
                     // cache hit (tag match and cache entry is valid)
-                    if((HIT_way1 && VALID_way1) || (HIT_way2 && VALID_way2)) begin
+                    if(CACHE_HIT) begin
                         cpu_res_inputReady1 = 1;
 
                         if((HIT_way1 && VALID_way1)) begin
@@ -181,7 +195,7 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
                             // if both way is not used, allocate to way 1
                             tag_write_way1[`CACHE_TAG_RECENT] = 1;
                             tag_write_way1[`CACHE_TAG_VALID] = 1;
-                            tag_write_way1[`CACHE_TAG] = cpu_address1[`WORD_TAG];
+                            tag_write_way1[`CACHE_TAG] = ADDRESS_TAG;
 
                             tag_write_way2[`CACHE_TAG_RECENT] = 0;
 
@@ -193,7 +207,7 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
                             // evict way 1
                             tag_write_way1[`CACHE_TAG_RECENT] = 1;
                             tag_write_way1[`CACHE_TAG_VALID] = 1;
-                            tag_write_way1[`CACHE_TAG] = cpu_address1[`WORD_TAG];
+                            tag_write_way1[`CACHE_TAG] = ADDRESS_TAG;
 
                             tag_write_way2[`CACHE_TAG_RECENT] = 0;
 
@@ -207,7 +221,7 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
 
                             tag_write_way2[`CACHE_TAG_RECENT] = 1;
                             tag_write_way2[`CACHE_TAG_VALID] = 1;
-                            tag_write_way2[`CACHE_TAG] = cpu_address1[`WORD_TAG];
+                            tag_write_way2[`CACHE_TAG] = ADDRESS_TAG;
 
                             UPDATE_WAY1 = 0;
                             UPDATE_WAY2 = 1;
