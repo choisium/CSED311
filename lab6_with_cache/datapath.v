@@ -256,7 +256,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, wr
 			// update IF/ID pipeline register (instr from data)
 			if(!flush && !stall && !instr_stall && !mem_data_stall) begin
 				pc_id <= pc;
-				new_inst_id <= new_inst_if;
+				new_inst_id <= 1'b1;
 			end else if(!flush && (stall || instr_stall || mem_data_stall)) begin // stall
 				pc_id <= pc_id;
 				new_inst_id <= new_inst_id;
