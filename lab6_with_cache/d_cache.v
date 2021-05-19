@@ -1,6 +1,5 @@
 `include "opcodes.v"
 `include "cache_def.v"
-`include "cache_module.v"
 
 module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_data2, cpu_inputReady2, cpu_ackOutput2,
         read_m2, write_m2, address2, data2, inputReady2, ackOutput2, cpu_valid2, valid2);

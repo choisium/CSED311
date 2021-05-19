@@ -1,6 +1,5 @@
 `include "opcodes.v"
 `include "cache_def.v"
-`include "cache_module.v"
 
 module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_inputReady1, 
         read_m1, address1, data1, inputReady1, cpu_valid1);
@@ -64,15 +63,15 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
     reg [`CACHE_DATA_SIZE-1:0] data_write_way2;  //cache line write data
     reg [`CACHE_REQ_SIZE-1:0] data_req;     //data req
 
-    reg HIT_way1;
-    reg VALID_way1;
-    reg DIRTY_way1;
-    reg RECENT_way1;
+    wire HIT_way1;
+    wire VALID_way1;
+    wire DIRTY_way1;
+    wire RECENT_way1;
 
-    reg HIT_way2;
-    reg VALID_way2;
-    reg DIRTY_way2;
-    reg RECENT_way2;
+    wire HIT_way2;
+    wire VALID_way2;
+    wire DIRTY_way2;
+    wire RECENT_way2;
 
     assign HIT_way1 = cpu_address1[`WORD_TAG] == tag_read_way1[`CACHE_TAG];
     assign VALID_way1 = tag_read_way1[`CACHE_TAG_VALID];
