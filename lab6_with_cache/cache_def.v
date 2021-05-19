@@ -8,9 +8,9 @@
 `define CACHE_TAG       12:0    // tag bits
 
 // tag_req, data_req
-`define CACHE_REQ_SIZE  3       // cache request
-`define CACHE_REQ_WE    2       // write enable
-`define CACHE_REQ_INDEX 1:0     // 2-bit index
+`define CACHE_REQ_SIZE  2       // cache request
+`define CACHE_REQ_WE    1       // write enable
+`define CACHE_REQ_INDEX 0     // 1-bit index
 
 // data_read, data_write
 `define CACHE_DATA_SIZE 64    // 64-bit cache line
