@@ -19,7 +19,6 @@ module cpu_TB();
 	wire [4*`WORD_SIZE-1:0] data2;
 	wire inputReady2;
 	wire ackOutput2;
-	wire valid1;
 	wire valid2;
 
 	// for debuging purpose
@@ -28,8 +27,8 @@ module cpu_TB();
 	wire is_halted;				// set if the cpu is halted
 
 	// instantiate the unit under test
-	cpu UUT (clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2, num_inst, output_port, is_halted, valid1, valid2);
-	Memory NUUT(!clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2, valid1, valid2);
+	cpu UUT (clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2, num_inst, output_port, is_halted, valid2);
+	Memory NUUT(!clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2, valid2);
 
 	// initialize inputs
 	initial begin
