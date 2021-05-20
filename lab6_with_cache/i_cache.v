@@ -193,42 +193,21 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
 
                         if(!RECENT_way1 && !RECENT_way2) begin
                             // if both way is not used, allocate to way 1
-                            tag_write_way1[`CACHE_TAG_RECENT] = 1;
-                            tag_write_way1[`CACHE_TAG_VALID] = 1;
-                            tag_write_way1[`CACHE_TAG] = ADDRESS_TAG;
-
-                            tag_write_way2[`CACHE_TAG_RECENT] = 0;
-
                             UPDATE_WAY1 = 1;
                             UPDATE_WAY2 = 0;
                         end 
 
                         else if (!RECENT_way1) begin 
                             // evict way 1
-                            tag_write_way1[`CACHE_TAG_RECENT] = 1;
-                            tag_write_way1[`CACHE_TAG_VALID] = 1;
-                            tag_write_way1[`CACHE_TAG] = ADDRESS_TAG;
-
-                            tag_write_way2[`CACHE_TAG_RECENT] = 0;
-
                             UPDATE_WAY1 = 1;
                             UPDATE_WAY2 = 0;
                         end
 
                         else begin 
                             // evict way 2
-                            tag_write_way1[`CACHE_TAG_RECENT] = 0;
-
-                            tag_write_way2[`CACHE_TAG_RECENT] = 1;
-                            tag_write_way2[`CACHE_TAG_VALID] = 1;
-                            tag_write_way2[`CACHE_TAG] = ADDRESS_TAG;
-
                             UPDATE_WAY1 = 0;
                             UPDATE_WAY2 = 1;
                         end
-
-                        // update tag
-                        tag_req[`CACHE_REQ_WE] = 1;
 
                         // generate memory request on miss
                         mem_req_read1 = 1;
@@ -252,14 +231,29 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
                 
                     else if (UPDATE_WAY1) begin // update way1 
                         data_write_way1 = data1;
+
+                        tag_write_way1[`CACHE_TAG_RECENT] = 1;
+                        tag_write_way1[`CACHE_TAG_VALID] = 1;
+                        tag_write_way1[`CACHE_TAG] = ADDRESS_TAG;
+
+                        tag_write_way2[`CACHE_TAG_RECENT] = 0;
                     end 
                 
                     else begin // update way 2
                         data_write_way2 = data1;
+
+                        tag_write_way1[`CACHE_TAG_RECENT] = 0;
+
+                        tag_write_way2[`CACHE_TAG_RECENT] = 1;
+                        tag_write_way2[`CACHE_TAG_VALID] = 1;
+                        tag_write_way2[`CACHE_TAG] = ADDRESS_TAG;
                     end
 
                     // update cache line data
                     data_req[`CACHE_REQ_WE] = 1;
+
+                    // update tag
+                    tag_req[`CACHE_REQ_WE] = 1;
 
                     // re-compare tag for write miss
                     vstate = CHECK;

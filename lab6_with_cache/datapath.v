@@ -315,14 +315,19 @@ module datapath(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, wr
 			end
 
 			// update MEM/WB pipeline register
-			pc_wb <= pc_mem; rf_rs_wb <= rf_rs_mem; alu_out_wb <= alu_out_mem;
-			rd_wb <= rd_mem;
+			if (!mem_data_stall) begin
+				pc_wb <= pc_mem; rf_rs_wb <= rf_rs_mem; alu_out_wb <= alu_out_mem;
+				rd_wb <= rd_mem;
+			end else begin
+				pc_wb <= pc_wb; rf_rs_wb <= rf_rs_wb; alu_out_wb <= alu_out_wb;
+				rd_wb <= rd_wb;
+			end
 
 			// update MEM/WB control signals
 			if (!mem_data_stall) begin
 				halt_wb <= halt_mem; wwd_wb <= wwd_mem; new_inst_wb <= new_inst_mem; reg_write_wb <= reg_write_mem; reg_src_wb <= reg_src_mem;
 			end else begin
-				halt_wb <= 0; wwd_wb <= 0; new_inst_wb <= 0; reg_write_wb <= 0; reg_src_wb <= 0;
+				halt_wb <= 0; wwd_wb <= 0; new_inst_wb <= 0; reg_write_wb <= reg_write_wb; reg_src_wb <= reg_src_wb;
 			end
 
 			// halt
