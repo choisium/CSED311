@@ -301,7 +301,6 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 							ackOutput2 <= 1;
 							memory[address2] <= data2;
 						end
-						// end
 					end
 				end
 			end
