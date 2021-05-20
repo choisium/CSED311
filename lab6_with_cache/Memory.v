@@ -279,7 +279,7 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 					end
 				end
 				
-				if(valid2 && read_m2) begin
+				if(read_m2) begin
 					if (count2 < `MEM_STALL_COUNT - 1) begin
 						// increase count
 						count2 <= count2 + 1;
@@ -299,7 +299,7 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 					end
 				end
 
-				if(valid2 && write_m2) begin
+				if(write_m2) begin
 					if (count2 < `MEM_STALL_COUNT - 1) begin
 						// increase count
 						count2 <= count2 + 1;

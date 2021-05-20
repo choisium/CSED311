@@ -24,3 +24,8 @@
 `define BLOCK_WORD_2 47:32
 `define BLOCK_WORD_3 31:16
 `define BLOCK_WORD_4 15:0
+
+`define BLOCK_WORD_1_C 47:0
+`define BLOCK_WORD_2_C 31:0
+`define BLOCK_WORD_3_C 63:32
+`define BLOCK_WORD_4_C 63:16
