@@ -1,6 +1,5 @@
 `include "opcodes.v"
 `include "cache_def.v"
-`include "cache_module.v"
 
 module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_inputReady1, 
         read_m1, address1, data1, inputReady1, cpu_valid1);
@@ -44,9 +43,8 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
     assign cpu_data1 = cpu_res_data1;
 
     localparam 
-        IDLE = 2'b00,
-        COMPARE_TAG = 2'b01,
-        ALLOCATE = 2'b10;
+        CHECK = 2'b00,
+        ALLOCATE = 2'b01;
 
     // state register
     reg [1:0] vstate, rstate;
@@ -65,25 +63,39 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
     reg [`CACHE_DATA_SIZE-1:0] data_write_way2;  //cache line write data
     reg [`CACHE_REQ_SIZE-1:0] data_req;     //data req
 
-    reg HIT_way1;
-    reg VALID_way1;
-    reg DIRTY_way1;
-    reg RECENT_way1;
+    wire HIT_way1;
+    wire VALID_way1;
+    wire DIRTY_way1;
+    wire RECENT_way1;
 
-    reg HIT_way2;
-    reg VALID_way2;
-    reg DIRTY_way2;
-    reg RECENT_way2;
+    wire HIT_way2;
+    wire VALID_way2;
+    wire DIRTY_way2;
+    wire RECENT_way2;
 
-    assign HIT_way1 = cpu_address1[`WORD_TAG] == tag_read_way1[`CACHE_TAG];
+    wire CACHE_HIT;
+    wire CACHE_MISS;
+
+    wire [`WORD_TAG] ADDRESS_TAG;
+    wire ADDRESS_IDX;
+    wire [`WORD_BO] ADDRESS_BO;
+
+    assign ADDRESS_TAG = cpu_address1[`WORD_TAG];
+    assign ADDRESS_IDX = cpu_address1[`WORD_IDX];
+    assign ADDRESS_BO = cpu_address1[`WORD_BO];
+
+    assign HIT_way1 = ADDRESS_TAG == tag_read_way1[`CACHE_TAG];
     assign VALID_way1 = tag_read_way1[`CACHE_TAG_VALID];
     assign DIRTY_way1 = tag_read_way1[`CACHE_TAG_DIRTY];
     assign RECENT_way1 = tag_read_way1[`CACHE_TAG_RECENT];
 
-    assign HIT_way2 = cpu_address1[`WORD_TAG] == tag_read_way2[`CACHE_TAG];
+    assign HIT_way2 = ADDRESS_TAG == tag_read_way2[`CACHE_TAG];
     assign VALID_way2 = tag_read_way2[`CACHE_TAG_VALID];
     assign DIRTY_way2 = tag_read_way2[`CACHE_TAG_DIRTY];
     assign RECENT_way2 = tag_read_way2[`CACHE_TAG_RECENT];
+
+    assign CACHE_HIT = (HIT_way1 && VALID_way1) || (HIT_way2 && VALID_way2);
+    assign CACHE_MISS = !CACHE_HIT;
 
     reg UPDATE_WAY1;    // tag, data will be written in way 1
     reg UPDATE_WAY2;    // tag, data will be written in way 2
@@ -98,14 +110,14 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
 
         // tag read by default, direct map index
         tag_req[`CACHE_REQ_WE] = 0;
-        tag_req[`CACHE_REQ_INDEX] = cpu_address1[`WORD_IDX];
+        tag_req[`CACHE_REQ_INDEX] = ADDRESS_IDX;
 
         // data read by default, direct map index
         data_req[`CACHE_REQ_WE] = 0;
-        data_req[`CACHE_REQ_INDEX] = cpu_address1[`WORD_IDX];
+        data_req[`CACHE_REQ_INDEX] = ADDRESS_IDX;
 
         // read correct word from cache (way 1)
-        case(cpu_address1[`WORD_BO])
+        case(ADDRESS_BO)
             2'b00: data_way1 = data_read_way1[`BLOCK_WORD_1];
             2'b01: data_way1 = data_read_way1[`BLOCK_WORD_2];
             2'b10: data_way1 = data_read_way1[`BLOCK_WORD_3];
@@ -113,7 +125,7 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
         endcase
 
         // read correct word from cache (way 2)
-        case(cpu_address1[`WORD_BO])
+        case(ADDRESS_BO)
             2'b00: data_way2 = data_read_way2[`BLOCK_WORD_1];
             2'b01: data_way2 = data_read_way2[`BLOCK_WORD_2];
             2'b10: data_way2 = data_read_way2[`BLOCK_WORD_3];
@@ -137,96 +149,72 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
 
         // Cache FSM
         case (rstate)
-            
-            // Idle State
-            IDLE: begin
-                // If CPU request, compare cache tag
-                if(cpu_valid1)
-                    vstate = COMPARE_TAG;
-                
+
+            // Check Cache hit? miss?
+            CHECK: begin
+                               
                 // no memory request
                 mem_req_read1 = 0;
 
                 // Initialize UPDATE reg
                 UPDATE_WAY1 = 0;
                 UPDATE_WAY2 = 0;
-            end
 
-            // Compare tag state
-            COMPARE_TAG: begin
+                // If no CPU request, maintain at CHECK state
+                if(!cpu_valid1) begin
+                    vstate = CHECK;
+                end else begin
+                    // cache hit (tag match and cache entry is valid)
+                    if(CACHE_HIT) begin
+                        cpu_res_inputReady1 = 1;
 
-                // cache hit (tag match and cache entry is valid)
-                if((HIT_way1 && VALID_way1) || (HIT_way2 && VALID_way2)) begin
-                    cpu_res_inputReady1 = 1;
+                        if((HIT_way1 && VALID_way1)) begin
 
-                    if((HIT_way1 && VALID_way1)) begin
+                            // Way1 HIT : Update Recent bit => way1 : 1, way2 = 0
+                            tag_write_way1[`CACHE_TAG_RECENT] = 1;
+                            tag_write_way2[`CACHE_TAG_RECENT] = 0;
 
-                        // Way1 HIT : Update Recent bit => way1 : 1, way2 = 0
-                        tag_write_way1[`CACHE_TAG_RECENT] = 1;
-                        tag_write_way2[`CACHE_TAG_RECENT] = 0;
+                        end else begin
 
-                    end else begin
+                            // Way2 HIT :Update Recent bit => way1 : 0, way2 = 1
+                            tag_write_way1[`CACHE_TAG_RECENT] = 0;
+                            tag_write_way2[`CACHE_TAG_RECENT] = 1;
+                        end
 
-                        // Way2 HIT :Update Recent bit => way1 : 0, way2 = 1
-                        tag_write_way1[`CACHE_TAG_RECENT] = 0;
-                        tag_write_way2[`CACHE_TAG_RECENT] = 1;
+                        // update tag
+                        tag_req[`CACHE_REQ_WE] = 1;
+
+                        // finished
+                        vstate = CHECK;
                     end
 
-                    // update tag
-                    tag_req[`CACHE_REQ_WE] = 1;
+                    // cache miss
+                    else begin
 
-                    // finished
-                    vstate = IDLE;
-                end
+                        if(!RECENT_way1 && !RECENT_way2) begin
+                            // if both way is not used, allocate to way 1
+                            UPDATE_WAY1 = 1;
+                            UPDATE_WAY2 = 0;
+                        end 
 
-                // cache miss
-                else begin
-                    // generate new tag
-                    tag_req[`CACHE_REQ_WE] = 1;
-                    if(!RECENT_way1 && !RECENT_way2) begin
-                        // if both way is not used, allocate to way 1
-                        tag_write_way1[`CACHE_TAG_RECENT] = 1;
-                        tag_write_way1[`CACHE_TAG_VALID] = 1;
-                        tag_write_way1[`CACHE_TAG] = cpu_address1[`WORD_TAG];
+                        else if (!RECENT_way1) begin 
+                            // evict way 1
+                            UPDATE_WAY1 = 1;
+                            UPDATE_WAY2 = 0;
+                        end
 
-                        tag_write_way2[`CACHE_TAG_RECENT] = 0;
+                        else begin 
+                            // evict way 2
+                            UPDATE_WAY1 = 0;
+                            UPDATE_WAY2 = 1;
+                        end
 
-                        UPDATE_WAY1 = 1;
-                        UPDATE_WAY2 = 0;
-                    end 
-
-                    else if (!RECENT_way1) begin 
-                        // evict way 1
-                        tag_write_way1[`CACHE_TAG_RECENT] = 1;
-                        tag_write_way1[`CACHE_TAG_VALID] = 1;
-                        tag_write_way1[`CACHE_TAG] = cpu_address1[`WORD_TAG];
-
-                        tag_write_way2[`CACHE_TAG_RECENT] = 0;
-
-                        UPDATE_WAY1 = 1;
-                        UPDATE_WAY2 = 0;
+                        // generate memory request on miss
+                        mem_req_read1 = 1;
+                        
+                        // wait until new block allocated
+                        vstate = ALLOCATE;
                     end
-
-                    else begin 
-                        // evict way 2
-                        tag_write_way1[`CACHE_TAG_RECENT] = 0;
-
-                        tag_write_way2[`CACHE_TAG_RECENT] = 1;
-                        tag_write_way2[`CACHE_TAG_VALID] = 1;
-                        tag_write_way2[`CACHE_TAG] = cpu_address1[`WORD_TAG];
-
-                        UPDATE_WAY1 = 0;
-                        UPDATE_WAY2 = 1;
-                    end
-
-                    // update tag
-                    tag_req[`CACHE_REQ_WE] = 1;
-
-                    // generate memory request on miss
-                    mem_req_read1 = 1;
-                    
-                    // wait until new block allocated
-                    vstate = ALLOCATE;
                 end
             end
 
@@ -243,26 +231,43 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
                 
                     else if (UPDATE_WAY1) begin // update way1 
                         data_write_way1 = data1;
+
+                        tag_write_way1[`CACHE_TAG_RECENT] = 1;
+                        tag_write_way1[`CACHE_TAG_VALID] = 1;
+                        tag_write_way1[`CACHE_TAG] = ADDRESS_TAG;
+
+                        tag_write_way2[`CACHE_TAG_RECENT] = 0;
                     end 
                 
                     else begin // update way 2
                         data_write_way2 = data1;
+
+                        tag_write_way1[`CACHE_TAG_RECENT] = 0;
+
+                        tag_write_way2[`CACHE_TAG_RECENT] = 1;
+                        tag_write_way2[`CACHE_TAG_VALID] = 1;
+                        tag_write_way2[`CACHE_TAG] = ADDRESS_TAG;
                     end
 
                     // update cache line data
                     data_req[`CACHE_REQ_WE] = 1;
 
+                    // update tag
+                    tag_req[`CACHE_REQ_WE] = 1;
+
                     // re-compare tag for write miss
-                    vstate = COMPARE_TAG;
+                    vstate = CHECK;
+                end
+                else begin
+                    vstate = ALLOCATE;
                 end
             end
-
         endcase
     end
 
     always @(posedge clk) begin
         if (!reset_n)
-            rstate <= IDLE;
+            rstate <= CHECK;
         else
             rstate <= vstate;
     end

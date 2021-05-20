@@ -4,6 +4,7 @@
 `include "datapath.v"
 `include "i_cache.v"
 `include "d_cache.v"
+`include "cache_module.v"
 
 module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, 
 		read_m2, write_m2, address2, data2, inputReady2, ackOutput2, 
