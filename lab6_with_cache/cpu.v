@@ -45,10 +45,13 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1,
 	wire cpu_inputReady2;
 	wire cpu_ackOutput2;
 
+	wire i_read_m1, d_read_m1;
+	wire [`WORD_SIZE-1:0] i_address1, d_address1;
 	wire cpu_valid1;
 	wire cpu_valid2;
-	wire valid2;
 
+	assign read_m1 = i_read_m1 | d_read_m1;
+	assign address1 = i_read_m1? i_address1: d_address1;
 	assign cpu_valid1 = cpu_read_m1;
 	assign cpu_valid2 = cpu_read_m2 | cpu_write_m2;
 	
@@ -79,8 +82,8 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1,
 		.cpu_data1(cpu_data1),
 		.cpu_inputReady1(cpu_inputReady1),
 		
-		.read_m1(read_m1),
-		.address1(address1),
+		.read_m1(i_read_m1),
+		.address1(i_address1),
 		.data1(data1),
 		.inputReady1(inputReady1),
 		.cpu_valid1(cpu_valid1)
@@ -89,6 +92,8 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1,
 	data_cache D_Cache(
 		.clk(clk),
 		.reset_n(reset_n),
+
+		// memory port 2 related
 		.cpu_read_m2(cpu_read_m2),
 		.cpu_write_m2(cpu_write_m2),
 		.cpu_address2(cpu_address2),
@@ -103,7 +108,19 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1,
 		.inputReady2(inputReady2),
 		.ackOutput2(ackOutput2),
 		.cpu_valid2(cpu_valid2),
-		.valid2(valid2)
+
+		// memory port 1 related
+		.cpu_read_m1(cpu_read_m1),
+		.cpu_address1(cpu_address1),
+		.cpu_data1(cpu_data1),
+		.cpu_inputReady1(cpu_inputReady1),
+		
+		.i_read_m1(i_read_m1),
+		.read_m1(d_read_m1),
+		.address1(d_address1),
+		.data1(data1),
+		.inputReady1(inputReady1),
+		.cpu_valid1(cpu_valid1)
 	);
 
 endmodule
