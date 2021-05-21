@@ -311,6 +311,9 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 						if (requested_address2 == address2) begin
 							ackOutput2 <= 1;
 							memory[address2] <= data2[`BLOCK_WORD_1];
+							memory[address2 + 1] <= data2[`BLOCK_WORD_2];
+							memory[address2 + 2] <= data2[`BLOCK_WORD_3];
+							memory[address2 + 3] <= data2[`BLOCK_WORD_4];
 						end
 					end
 				end

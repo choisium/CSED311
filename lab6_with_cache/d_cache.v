@@ -39,6 +39,7 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
     reg cpu_res_ackOutput2;
 
     reg [`WORD_SIZE-1:0] mem_req_addr2;
+    reg [`CACHE_DATA_SIZE-1:0] mem_req_data2;
     reg mem_req_read2;
     reg mem_req_write2;
 
@@ -54,7 +55,7 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
     assign cpu_ackOutput2 = cpu_res_ackOutput2;
     assign cpu_data2 = cpu_read_m2? cpu_res_data2: 'bz;
 
-    assign data2 = read_m2? 'bz: {4{cpu_data2}};
+    assign data2 = read_m2? 'bz: mem_req_data2;
 
     // assign data2 = read_m2? 'bz: {4{cpu_data2}};
     // assign cpu_data2 = read_m2 && inputReady2 ? data2[`BLOCK_WORD_1] : 'bz;
@@ -94,6 +95,7 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
 
     wire CACHE_HIT;
     wire CACHE_MISS;
+    wire WRITE_BACK_STAGE;
 
     wire [`WORD_TAG] ADDRESS_TAG;
     wire ADDRESS_IDX;
@@ -115,6 +117,7 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
 
     assign CACHE_HIT = (HIT_way1 && VALID_way1) || (HIT_way2 && VALID_way2);
     assign CACHE_MISS = !CACHE_HIT;
+    assign WRITE_BACK_STAGE = (rstate == WRITE_BACK);
 
     reg UPDATE_WAY1;    // tag, data will be written in way 1
     reg UPDATE_WAY2;    // tag, data will be written in way 2
@@ -151,14 +154,6 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
             2'b11: data_way2 = data_read_way2[`BLOCK_WORD_4];
         endcase
 
-        // write correct word using data2
-        case(ADDRESS_BO)
-            2'b00: write_data = {cpu_data2, data_read_way1[`BLOCK_WORD_1_C]};
-            2'b01: write_data = {data_read_way1[`BLOCK_WORD_1], cpu_data2, data_read_way1[`BLOCK_WORD_2_C]};
-            2'b10: write_data = {data_read_way1[`BLOCK_WORD_3_C], cpu_data2, data_read_way1[`BLOCK_WORD_4]};
-            2'b11: write_data = {data_read_way1[`BLOCK_WORD_4_C], cpu_data2};
-        endcase
-
         // correlate write and read; when write, write same tag and data if nothing changed
         tag_write_way1 = tag_read_way1;
         tag_write_way2 = tag_read_way2;
@@ -167,9 +162,6 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
 
         // choose right data way
         cpu_res_data2 = HIT_way1? data_way1 : data_way2;
-
-        // memory request address (sampled from CPU request)
-        mem_req_addr2 = {cpu_address2[15:2], 2'b0};
 
         // cpu_res
         cpu_res_inputReady2 = 0;
@@ -195,6 +187,7 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
                 end else begin
                     // cache hit (tag match and cache entry is valid)
                     if(CACHE_HIT) begin
+                        // cache hit and read -> send data to cpu and update recent bit
                         if (cpu_read_m2) begin
                             cpu_res_inputReady2 = 1;
 
@@ -213,28 +206,51 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
 
                             // update tag
                             tag_req[`CACHE_REQ_WE] = 1;
-                        end else if (cpu_write_m2) begin
+                        end
+
+                        // cache hit and write -> write data to cache with dirty bit and update recent bit
+                        else if (cpu_write_m2) begin
                             cpu_res_ackOutput2 = 1;
-                            data_write_way1 = write_data;
 
                             if((HIT_way1 && VALID_way1)) begin
-
+                                // Way1 HIT: Write on way 1, set dirty bit
                                 UPDATE_WAY1 = 1;
                                 UPDATE_WAY2 = 0;
 
+                                // write correct word using data2
+                                case(ADDRESS_BO)
+                                    2'b00: write_data = {cpu_data2, data_read_way1[`BLOCK_WORD_1_C]};
+                                    2'b01: write_data = {data_read_way1[`BLOCK_WORD_1], cpu_data2, data_read_way1[`BLOCK_WORD_2_C]};
+                                    2'b10: write_data = {data_read_way1[`BLOCK_WORD_3_C], cpu_data2, data_read_way1[`BLOCK_WORD_4]};
+                                    2'b11: write_data = {data_read_way1[`BLOCK_WORD_4_C], cpu_data2};
+                                endcase
+
+                                data_write_way1 = write_data;
+
                                 tag_write_way1[`CACHE_TAG_DIRTY] = 1;
 
-                                // Way1 HIT : Update Recent bit => way1 : 1, way2 = 0
+                                // Update Recent bit => way1 : 1, way2 = 0
                                 tag_write_way1[`CACHE_TAG_RECENT] = 1;
                                 tag_write_way2[`CACHE_TAG_RECENT] = 0;
 
                             end else begin
+                                // Way2 HIT: Write on way 2, set dirty bit
                                 UPDATE_WAY1 = 0;
                                 UPDATE_WAY2 = 1;
 
+                                // write correct word using data2
+                                case(ADDRESS_BO)
+                                    2'b00: write_data = {cpu_data2, data_read_way2[`BLOCK_WORD_1_C]};
+                                    2'b01: write_data = {data_read_way2[`BLOCK_WORD_1], cpu_data2, data_read_way2[`BLOCK_WORD_2_C]};
+                                    2'b10: write_data = {data_read_way2[`BLOCK_WORD_3_C], cpu_data2, data_read_way2[`BLOCK_WORD_4]};
+                                    2'b11: write_data = {data_read_way2[`BLOCK_WORD_4_C], cpu_data2};
+                                endcase
+
+                                data_write_way2 = write_data;
+
                                 tag_write_way2[`CACHE_TAG_DIRTY] = 1;
 
-                                // Way2 HIT :Update Recent bit => way1 : 0, way2 = 1
+                                // Update Recent bit => way1 : 0, way2 = 1
                                 tag_write_way1[`CACHE_TAG_RECENT] = 0;
                                 tag_write_way2[`CACHE_TAG_RECENT] = 1;
                             end
@@ -257,25 +273,66 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
                             // if both way is not used, allocate to way 1
                             UPDATE_WAY1 = 1;
                             UPDATE_WAY2 = 0;
+
+                            // generate memory request on miss
+                            mem_req_read2 = 1;
+                            // memory request address (sampled from CPU request)
+                            mem_req_addr2 = {cpu_address2[15:2], 2'b0};
+                            // wait until new block allocated
+                            vstate = ALLOCATE;
                         end
 
                         else if (!RECENT_way1) begin
                             // evict way 1
                             UPDATE_WAY1 = 1;
                             UPDATE_WAY2 = 0;
+
+                            // if evict line is dirty, write back it to memory
+                            if (VALID_way1 && DIRTY_way1) begin
+                                // generate memory write request for dirty line
+                                mem_req_write2 = 1;
+                                // memory request address (sampled from cache tag)
+                                mem_req_addr2 = {tag_read_way1[`CACHE_TAG], ADDRESS_IDX, 2'b00};
+                                mem_req_data2 = data_read_way1;
+                                // wait until write back done
+                                vstate = WRITE_BACK;
+                            end
+
+                            else begin
+                                // generate memory request on miss
+                                mem_req_read2 = 1;
+                                // memory request address (sampled from CPU request)
+                                mem_req_addr2 = {cpu_address2[15:2], 2'b0};
+                                // wait until new block allocated
+                                vstate = ALLOCATE;
+                            end
                         end
 
                         else begin
                             // evict way 2
                             UPDATE_WAY1 = 0;
                             UPDATE_WAY2 = 1;
+
+                            // if evict line is dirty, write back it to memory
+                            if (VALID_way2 && DIRTY_way2) begin
+                                // generate memory write request for dirty line
+                                mem_req_write2 = 1;
+                                // memory request address (sampled from cache tag)
+                                mem_req_addr2 = {tag_read_way2[`CACHE_TAG], ADDRESS_IDX, 2'b00};
+                                mem_req_data2 = data_read_way2;
+                                // wait until write back done
+                                vstate = WRITE_BACK;
+                            end
+
+                            else begin
+                                // generate memory request on miss
+                                mem_req_read2 = 1;
+                                // memory request address (sampled from CPU request)
+                                mem_req_addr2 = {cpu_address2[15:2], 2'b0};
+                                // wait until new block allocated
+                                vstate = ALLOCATE;
+                            end
                         end
-
-                        // generate memory request on miss
-                        mem_req_read2 = 1;
-
-                        // wait until new block allocated
-                        vstate = ALLOCATE;
                     end
                 end
             end
@@ -286,29 +343,52 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
                 // memory responded
                 if (inputReady2) begin
 
+                    if (cpu_write_m2) begin
+                        case(ADDRESS_BO)
+                            2'b00: write_data = {cpu_data2, data2[`BLOCK_WORD_1_C]};
+                            2'b01: write_data = {data2[`BLOCK_WORD_1], cpu_data2, data2[`BLOCK_WORD_2_C]};
+                            2'b10: write_data = {data2[`BLOCK_WORD_3_C], cpu_data2, data2[`BLOCK_WORD_4]};
+                            2'b11: write_data = {data2[`BLOCK_WORD_4_C], cpu_data2};
+                        endcase
+                    end else begin
+                        write_data = data2;
+                    end
+
                     // update cache line data
                     if (!UPDATE_WAY1 && !UPDATE_WAY2) begin // not happen
                         $display("ALLOCATE ERROR");
                     end
 
                     else if (UPDATE_WAY1) begin // update way1
-                        data_write_way1 = data2;
+                        data_write_way1 = write_data;
 
                         tag_write_way1[`CACHE_TAG_RECENT] = 1;
                         tag_write_way1[`CACHE_TAG_VALID] = 1;
                         tag_write_way1[`CACHE_TAG] = ADDRESS_TAG;
 
                         tag_write_way2[`CACHE_TAG_RECENT] = 0;
+
+                        if (cpu_write_m2) begin
+                            tag_write_way1[`CACHE_TAG_DIRTY] = 1;
+                        end else begin
+                            tag_write_way1[`CACHE_TAG_DIRTY] = 0;
+                        end
                     end
 
                     else begin // update way 2
-                        data_write_way2 = data2;
+                        data_write_way2 = write_data;
 
                         tag_write_way1[`CACHE_TAG_RECENT] = 0;
 
                         tag_write_way2[`CACHE_TAG_RECENT] = 1;
                         tag_write_way2[`CACHE_TAG_VALID] = 1;
                         tag_write_way2[`CACHE_TAG] = ADDRESS_TAG;
+
+                        if (cpu_write_m2) begin
+                            tag_write_way2[`CACHE_TAG_DIRTY] = 1;
+                        end else begin
+                            tag_write_way2[`CACHE_TAG_DIRTY] = 0;
+                        end
                     end
 
                     // update cache line data
@@ -322,6 +402,24 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
                 end
                 else begin
                     vstate = ALLOCATE;
+                end
+            end
+
+            // wait until write back is done for dirty cache line
+            WRITE_BACK: begin
+
+                // memory responded
+                if (ackOutput2) begin
+                    // generate memory request on miss
+                    mem_req_write2 = 0;
+                    mem_req_read2 = 1;
+                    // memory request address (sampled from CPU request)
+                    mem_req_addr2 = {cpu_address2[15:2], 2'b0};
+
+                    vstate = ALLOCATE;
+                end
+                else begin
+                    vstate = WRITE_BACK;
                 end
             end
         endcase
