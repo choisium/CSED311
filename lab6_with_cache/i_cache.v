@@ -223,6 +223,21 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
 
                 // memory responded
                 if (inputReady1) begin
+                    // read correct word from cache (way 1)
+                    case(ADDRESS_BO)
+                        2'b00: data_way1 = data1[`BLOCK_WORD_1];
+                        2'b01: data_way1 = data1[`BLOCK_WORD_2];
+                        2'b10: data_way1 = data1[`BLOCK_WORD_3];
+                        2'b11: data_way1 = data1[`BLOCK_WORD_4];
+                    endcase
+
+                    // read correct word from cache (way 2)
+                    case(ADDRESS_BO)
+                        2'b00: data_way2 = data1[`BLOCK_WORD_1];
+                        2'b01: data_way2 = data1[`BLOCK_WORD_2];
+                        2'b10: data_way2 = data1[`BLOCK_WORD_3];
+                        2'b11: data_way2 = data1[`BLOCK_WORD_4];
+                    endcase
 
                     // update cache line data
                     if (!UPDATE_WAY1 && !UPDATE_WAY2) begin // not happen
@@ -231,22 +246,28 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
                 
                     else if (UPDATE_WAY1) begin // update way1 
                         data_write_way1 = data1;
+                        cpu_res_data1 = data_way1;
 
                         tag_write_way1[`CACHE_TAG_RECENT] = 1;
                         tag_write_way1[`CACHE_TAG_VALID] = 1;
                         tag_write_way1[`CACHE_TAG] = ADDRESS_TAG;
 
                         tag_write_way2[`CACHE_TAG_RECENT] = 0;
-                    end 
-                
+
+                        cpu_res_inputReady1 = 1;
+                    end
+
                     else begin // update way 2
                         data_write_way2 = data1;
+                        cpu_res_data1 = data_way2;
 
                         tag_write_way1[`CACHE_TAG_RECENT] = 0;
 
                         tag_write_way2[`CACHE_TAG_RECENT] = 1;
                         tag_write_way2[`CACHE_TAG_VALID] = 1;
                         tag_write_way2[`CACHE_TAG] = ADDRESS_TAG;
+
+                        cpu_res_inputReady1 = 1;
                     end
 
                     // update cache line data
