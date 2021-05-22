@@ -27,7 +27,7 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
     wire cpu_ackOutput1;
 
     // I/O between Memory
-	inout read_m2;
+	output read_m2;
 	output write_m2;
 	output [`WORD_SIZE-1:0] address2;
 
