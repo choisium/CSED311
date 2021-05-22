@@ -578,7 +578,7 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
             // update hit count and memory count
             if (cpu_valid2) begin
                 previous_address <= cpu_address2;
-                if (rstate == CHECK && previous_address != cpu_address1) begin
+                if (rstate == CHECK && previous_address != cpu_address2) begin
                     memory_count <= memory_count + 1;
                     if (vstate == CHECK) begin
                         hit_count <= hit_count + 1;
