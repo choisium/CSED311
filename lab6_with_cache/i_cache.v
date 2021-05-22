@@ -100,7 +100,9 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
     reg UPDATE_WAY1;    // tag, data will be written in way 1
     reg UPDATE_WAY2;    // tag, data will be written in way 2
 
+    // to calculate hit ratio
     integer hit_count, memory_count;
+    reg [`WORD_SIZE-1:0] previous_address;
 
     always @(*) begin
         vstate = rstate;
@@ -293,9 +295,13 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
             rstate <= CHECK;
             memory_count <= 0;
             hit_count <= 0;
+            previous_address <= ~0;
         end else begin
+            // update state
             rstate <= vstate;
-            if (rstate == CHECK) begin
+            // update hit count and memory count
+            previous_address <= cpu_address1;
+            if (cpu_valid1 && rstate == CHECK && previous_address != cpu_address1) begin
                 memory_count <= memory_count + 1;
                 if (vstate == CHECK) begin
                     hit_count <= hit_count + 1;
