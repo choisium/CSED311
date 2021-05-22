@@ -145,9 +145,6 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
         // choose right data way
         cpu_res_data1 = HIT_way1? data_way1 : data_way2;
 
-        // memory request address (sampled from CPU request)
-        mem_req_addr1 = {cpu_address1[15:2], 2'b0};
-
         // cpu_res
         cpu_res_inputReady1 = 0;
 
@@ -215,6 +212,9 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
 
                         // generate memory request on miss
                         mem_req_read1 = 1;
+
+                        // memory request address (sampled from CPU request)
+                        mem_req_addr1 = {cpu_address1[15:2], 2'b0};
                         
                         // wait until new block allocated
                         vstate = ALLOCATE;
@@ -226,7 +226,7 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
             ALLOCATE: begin
 
                 // memory responded
-                if (inputReady1) begin
+                if (inputReady1 && mem_req_addr1 == {cpu_address1[15:2], 2'b0}) begin
                     // read correct word from cache (way 1)
                     case(ADDRESS_BO)
                         2'b00: data_way1 = data1[`BLOCK_WORD_1];
@@ -282,6 +282,11 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
 
                     // re-compare tag for write miss
                     vstate = CHECK;
+                end
+                else if (inputReady1) begin
+                    // address is changed. re-request to memory
+                    mem_req_addr1 = {cpu_address1[15:2], 2'b0};
+                    vstate = ALLOCATE;
                 end
                 else begin
                     vstate = ALLOCATE;
