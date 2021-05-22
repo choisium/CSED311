@@ -596,7 +596,6 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
                 end
             end
         end
-        $display("D - hit: %d, memory: %d", hit_count, memory_count);
     end
 
     // connect cache tag/data memory

@@ -315,7 +315,6 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
                 end
             end
         end
-        $display("I - hit: %d, memory: %d", hit_count, memory_count);
     end
 
     // connect cache tag/data memory
