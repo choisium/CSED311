@@ -143,6 +143,10 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
     reg UPDATE_WAY1;    // tag, data will be written in way 1
     reg UPDATE_WAY2;    // tag, data will be written in way 2
 
+    // to calculate hit ratio
+    integer hit_count, memory_count;
+    reg [`WORD_SIZE-1:0] previous_address;
+
     always @(*) begin
         vstate = rstate;
 
@@ -573,10 +577,26 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
     end
 
     always @(posedge clk) begin
-        if (!reset_n)
+        if (!reset_n) begin
             rstate <= CHECK;
-        else
+            memory_count <= 0;
+            hit_count <= 0;
+            previous_address <= ~0;
+        end else begin
+            // update state
             rstate <= vstate;
+            // update hit count and memory count
+            if (cpu_valid2) begin
+                previous_address <= cpu_address2;
+                if (rstate == CHECK && previous_address != cpu_address1) begin
+                    memory_count <= memory_count + 1;
+                    if (vstate == CHECK) begin
+                        hit_count <= hit_count + 1;
+                    end
+                end
+            end
+        end
+        $display("D - hit: %d, memory: %d", hit_count, memory_count);
     end
 
     // connect cache tag/data memory
