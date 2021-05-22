@@ -262,23 +262,14 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 					if (count1 == 0 && requested_address1 == address1 && inputReady1 == 1) begin
 						// data already given but address is not changed. do nothing
 					end else if (count1 < `MEM_STALL_COUNT - 1) begin
-						if (count1 != 0 && requested_address1 != address1) begin
-							// address changed. reset count to 1
-							count1 <= 1;
-						end else begin
-							// increase count
-							count1 <= count1 + 1;
-						end
+						// increase count
+						count1 <= count1 + 1;
 						inputReady1 <= 0;
 						requested_address1 <= address1;
 					end else begin
-						if (requested_address1 != address1) begin
-							// address changed. reset count to 1
-							count1 <= 1;
-							requested_address1 <= address1;
-						end else begin
-							// count is full. return data and reset count
-							count1 <= 0;
+						// count is full. return data and reset count
+						count1 <= 0;
+						if (requested_address1 == address1) begin
 							inputReady1 <= 1;
 							data1[`BLOCK_WORD_1] <= memory[address1+`WORD_SIZE'b00];
 							data1[`BLOCK_WORD_2] <= memory[address1+`WORD_SIZE'b01];
@@ -295,13 +286,9 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 						inputReady2 <= 0;
 						requested_address2 <= address2;
 					end else begin
-						if (requested_address2 != address2) begin
-							// address changed. reset count to 1
-							count2 <= 1;
-							requested_address2 <= address2;
-						end else begin
-							// count is full. return data and reset count
-							count2 <= 0;
+						// count is full. return data and reset count
+						count2 <= 0;
+						if (requested_address2 == address2) begin
 							inputReady2 <= 1;
 							// output_data2 <= memory[address2];
 							output_data2[`BLOCK_WORD_1] <= memory[address2+`WORD_SIZE'b00];
@@ -319,13 +306,9 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 						ackOutput2 <= 0;
 						requested_address2 <= address2;
 					end else begin
-						if (requested_address2 != address2) begin
-							// address changed. reset count to 1
-							count2 <= 1;
-							requested_address2 <= address2;
-						end else begin
-							// count is full. write data and reset count
-							count2 <= 0;
+						// count is full. write data and reset count
+						count2 <= 0;
+						if (requested_address2 == address2) begin
 							ackOutput2 <= 1;
 							memory[address2] <= data2[`BLOCK_WORD_1];
 						end
