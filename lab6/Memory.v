@@ -268,7 +268,7 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 						// count is full. return data and reset count
 						count1 <= 0;
 						inputReady1 <= 1;
-						data1 <= memory[address1];
+						data1 <= memory[requested_address1];
 					end
 				end
 				

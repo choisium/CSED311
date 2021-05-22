@@ -161,7 +161,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, wr
 			mem_data_stall = 0;
 			requested_address = 0;
 		end else begin
-			if (read_m1 && !inputReady1) begin
+			if (read_m1 && (!inputReady1 || !match_address)) begin
 				instr_stall = 1;
 			end else begin
 				instr_stall = 0;
