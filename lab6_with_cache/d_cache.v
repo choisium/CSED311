@@ -392,6 +392,22 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
                         write_data = data2;
                     end
 
+                    // read correct word from cache (way 1)
+                    case(ADDRESS_BO)
+                        2'b00: data_way1 = data2[`BLOCK_WORD_1];
+                        2'b01: data_way1 = data2[`BLOCK_WORD_2];
+                        2'b10: data_way1 = data2[`BLOCK_WORD_3];
+                        2'b11: data_way1 = data2[`BLOCK_WORD_4];
+                    endcase
+
+                    // read correct word from cache (way 2)
+                    case(ADDRESS_BO)
+                        2'b00: data_way2 = data2[`BLOCK_WORD_1];
+                        2'b01: data_way2 = data2[`BLOCK_WORD_2];
+                        2'b10: data_way2 = data2[`BLOCK_WORD_3];
+                        2'b11: data_way2 = data2[`BLOCK_WORD_4];
+                    endcase
+
                     // update cache line data
                     if (!UPDATE_WAY1 && !UPDATE_WAY2) begin // not happen
                         $display("ALLOCATE ERROR");
@@ -408,8 +424,11 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
 
                         if (cpu_write_m2) begin
                             tag_write_way1[`CACHE_TAG_DIRTY] = 1;
+                            cpu_res_ackOutput2 = 1;
                         end else begin
                             tag_write_way1[`CACHE_TAG_DIRTY] = 0;
+                            cpu_res_inputReady2 = 1;
+                            cpu_res_data2 = data_way1;
                         end
                     end
 
@@ -424,8 +443,11 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
 
                         if (cpu_write_m2) begin
                             tag_write_way2[`CACHE_TAG_DIRTY] = 1;
+                            cpu_res_ackOutput2 = 1;
                         end else begin
                             tag_write_way2[`CACHE_TAG_DIRTY] = 0;
+                            cpu_res_inputReady2 = 1;
+                            cpu_res_data2 = data_way2;
                         end
                     end
 
@@ -476,6 +498,22 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
                         write_data = data1;
                     end
 
+                    // read correct word from cache (way 1)
+                    case(ADDRESS_BO)
+                        2'b00: data_way1 = data1[`BLOCK_WORD_1];
+                        2'b01: data_way1 = data1[`BLOCK_WORD_2];
+                        2'b10: data_way1 = data1[`BLOCK_WORD_3];
+                        2'b11: data_way1 = data1[`BLOCK_WORD_4];
+                    endcase
+
+                    // read correct word from cache (way 2)
+                    case(ADDRESS_BO)
+                        2'b00: data_way2 = data1[`BLOCK_WORD_1];
+                        2'b01: data_way2 = data1[`BLOCK_WORD_2];
+                        2'b10: data_way2 = data1[`BLOCK_WORD_3];
+                        2'b11: data_way2 = data1[`BLOCK_WORD_4];
+                    endcase
+
                     // update cache line data
                     if (!UPDATE_WAY1 && !UPDATE_WAY2) begin // not happen
                         $display("ALLOCATE ERROR");
@@ -492,8 +530,11 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
 
                         if (cpu_write_m2) begin
                             tag_write_way1[`CACHE_TAG_DIRTY] = 1;
+                            cpu_res_ackOutput2 = 1;
                         end else begin
                             tag_write_way1[`CACHE_TAG_DIRTY] = 0;
+                            cpu_res_inputReady2 = 1;
+                            cpu_res_data2 = data_way1;
                         end
                     end
 
@@ -508,8 +549,11 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
 
                         if (cpu_write_m2) begin
                             tag_write_way2[`CACHE_TAG_DIRTY] = 1;
+                            cpu_res_ackOutput2 = 1;
                         end else begin
                             tag_write_way2[`CACHE_TAG_DIRTY] = 0;
+                            cpu_res_inputReady2 = 1;
+                            cpu_res_data2 = data_way2;
                         end
                     end
 
