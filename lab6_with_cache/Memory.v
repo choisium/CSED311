@@ -265,10 +265,12 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 						// increase count
 						count1 <= count1 + 1;
 						inputReady1 <= 0;
+						if (count1 == 0) begin
+							requested_address1 <= address1;
+						end
 					end else begin
 						// count is full. return data and reset count
 						count1 <= 0;
-						requested_address1 <= address1;
 						if (requested_address1 == address1) begin
 							inputReady1 <= 1;
 							data1[`BLOCK_WORD_1] <= memory[address1+`WORD_SIZE'b00];
@@ -284,10 +286,12 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 						// increase count
 						count2 <= count2 + 1;
 						inputReady2 <= 0;
+						if (count2 == 0) begin
+							requested_address2 <= address2;
+						end
 					end else begin
 						// count is full. return data and reset count
 						count2 <= 0;
-						requested_address2 <= address2;
 						if (requested_address2 == address2) begin
 							inputReady2 <= 1;
 							// output_data2 <= memory[address2];
@@ -304,10 +308,12 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 						// increase count
 						count2 <= count2 + 1;
 						ackOutput2 <= 0;
+						if (count2 == 0) begin
+							requested_address2 <= address2;
+						end
 					end else begin
 						// count is full. write data and reset count
 						count2 <= 0;
-						requested_address2 <= address2;
 						if (requested_address2 == address2) begin
 							ackOutput2 <= 1;
 							memory[address2] <= data2[`BLOCK_WORD_1];
