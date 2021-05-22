@@ -300,11 +300,13 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
             // update state
             rstate <= vstate;
             // update hit count and memory count
-            previous_address <= cpu_address1;
-            if (cpu_valid1 && rstate == CHECK && previous_address != cpu_address1) begin
-                memory_count <= memory_count + 1;
-                if (vstate == CHECK) begin
-                    hit_count <= hit_count + 1;
+            if (cpu_valid1) begin
+                previous_address <= cpu_address1;
+                if (rstate == CHECK && previous_address != cpu_address1) begin
+                    memory_count <= memory_count + 1;
+                    if (vstate == CHECK) begin
+                        hit_count <= hit_count + 1;
+                    end
                 end
             end
         end
