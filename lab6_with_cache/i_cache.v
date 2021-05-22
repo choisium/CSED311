@@ -100,6 +100,8 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
     reg UPDATE_WAY1;    // tag, data will be written in way 1
     reg UPDATE_WAY2;    // tag, data will be written in way 2
 
+    integer hit_count, memory_count;
+
     always @(*) begin
         vstate = rstate;
 
@@ -287,10 +289,20 @@ module instr_cache(clk, reset_n, cpu_read_m1, cpu_address1, cpu_data1, cpu_input
     end
 
     always @(posedge clk) begin
-        if (!reset_n)
+        if (!reset_n) begin
             rstate <= CHECK;
-        else
+            memory_count <= 0;
+            hit_count <= 0;
+        end else begin
             rstate <= vstate;
+            if (rstate == CHECK) begin
+                memory_count <= memory_count + 1;
+                if (vstate == CHECK) begin
+                    hit_count <= hit_count + 1;
+                end
+            end
+        end
+        $display("I - hit: %d, memory: %d", hit_count, memory_count);
     end
 
     // connect cache tag/data memory
