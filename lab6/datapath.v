@@ -161,15 +161,15 @@ module datapath(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, wr
 			mem_data_stall = 0;
 			requested_address = 0;
 		end else begin
-			if (read_m1 && !inputReady1) begin
+			if (read_m1 && (!inputReady1 || !match_address)) begin
 				instr_stall = 1;
 			end else begin
 				instr_stall = 0;
 			end
 
-			if (inputReady1) begin
-				requested_address = pc;
-			end
+			// if (inputReady1) begin
+			// 	requested_address = pc;
+			// end
 
 			if ((read_m2 && !inputReady2) || (write_m2 && !ackOutput2)) begin
 				mem_data_stall = 1;
@@ -203,15 +203,19 @@ module datapath(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, wr
 		end
 	end
 
-/* 	always @(posedge clk) begin
+	always @(posedge clk) begin
 		if (!reset_n) begin
 			requested_address <= 0;
 		end else begin
 			if (inputReady1) begin
-				requested_address <= address1;
+				if (!instr_stall) begin
+					requested_address <= pc_nxt;
+				end else begin
+					requested_address <= address1;
+				end
 			end
 		end
-	end  */
+	end
 
 	// set flush
 	always @(*) begin
