@@ -6,7 +6,7 @@
 `define WORD_SIZE 16	//	instead of 2^16 words to reduce memory
 			//	requirements in the Active-HDL simulator 
 
-module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2, valid2);
+module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2);
 
 	input clk;
 	wire clk;
@@ -38,13 +38,10 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 	reg [`WORD_SIZE-1:0] memory [0:`MEMORY_SIZE-1];
 	reg [4*`WORD_SIZE-1:0] output_data2;
 
-	input valid2;
-	wire valid2;
-
 	// count1 for instruction latency
 	// count2 for data latency
 	reg [2:0] count1, count2;
-	reg [`WORD_SIZE-1:0] requested_address1, requested_address2, requested_data;
+	reg [`WORD_SIZE-1:0] requested_address1, requested_address2;
 	
 	assign data2 = read_m2 ? output_data2 : 'bz;
 
@@ -52,7 +49,7 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 		if(!reset_n)
 			begin
 				count1 <= 0; count2 <= 0;
-				requested_address1 <= 0; requested_address2 <= 0; requested_data <= 0;
+				requested_address1 <= 0; requested_address2 <= 0;
 				output_data2 <= 0;
 				inputReady1 <= 0; inputReady2 <= 0; ackOutput2 <= 0;
 
@@ -271,13 +268,11 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 					end else begin
 						// count is full. return data and reset count
 						count1 <= 0;
-						if (requested_address1 == address1) begin
-							inputReady1 <= 1;
-							data1[`BLOCK_WORD_1] <= memory[address1+`WORD_SIZE'b00];
-							data1[`BLOCK_WORD_2] <= memory[address1+`WORD_SIZE'b01];
-							data1[`BLOCK_WORD_3] <= memory[address1+`WORD_SIZE'b10];
-							data1[`BLOCK_WORD_4] <= memory[address1+`WORD_SIZE'b11];
-						end
+						inputReady1 <= 1;
+						data1[`BLOCK_WORD_1] <= memory[requested_address1+`WORD_SIZE'b00];
+						data1[`BLOCK_WORD_2] <= memory[requested_address1+`WORD_SIZE'b01];
+						data1[`BLOCK_WORD_3] <= memory[requested_address1+`WORD_SIZE'b10];
+						data1[`BLOCK_WORD_4] <= memory[requested_address1+`WORD_SIZE'b11];
 					end
 				end
 				
@@ -292,14 +287,11 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 					end else begin
 						// count is full. return data and reset count
 						count2 <= 0;
-						if (requested_address2 == address2) begin
-							inputReady2 <= 1;
-							// output_data2 <= memory[address2];
-							output_data2[`BLOCK_WORD_1] <= memory[address2+`WORD_SIZE'b00];
-							output_data2[`BLOCK_WORD_2] <= memory[address2+`WORD_SIZE'b01];
-							output_data2[`BLOCK_WORD_3] <= memory[address2+`WORD_SIZE'b10];
-							output_data2[`BLOCK_WORD_4] <= memory[address2+`WORD_SIZE'b11];
-						end
+						inputReady2 <= 1;
+						output_data2[`BLOCK_WORD_1] <= memory[requested_address2+`WORD_SIZE'b00];
+						output_data2[`BLOCK_WORD_2] <= memory[requested_address2+`WORD_SIZE'b01];
+						output_data2[`BLOCK_WORD_3] <= memory[requested_address2+`WORD_SIZE'b10];
+						output_data2[`BLOCK_WORD_4] <= memory[requested_address2+`WORD_SIZE'b11];
 					end
 				end
 
@@ -314,13 +306,11 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 					end else begin
 						// count is full. write data and reset count
 						count2 <= 0;
-						if (requested_address2 == address2) begin
-							ackOutput2 <= 1;
-							memory[address2] <= data2[`BLOCK_WORD_1];
-							memory[address2 + 1] <= data2[`BLOCK_WORD_2];
-							memory[address2 + 2] <= data2[`BLOCK_WORD_3];
-							memory[address2 + 3] <= data2[`BLOCK_WORD_4];
-						end
+						ackOutput2 <= 1;
+						memory[requested_address2] <= data2[`BLOCK_WORD_1];
+						memory[requested_address2 + 1] <= data2[`BLOCK_WORD_2];
+						memory[requested_address2 + 2] <= data2[`BLOCK_WORD_3];
+						memory[requested_address2 + 3] <= data2[`BLOCK_WORD_4];
 					end
 				end
 			end

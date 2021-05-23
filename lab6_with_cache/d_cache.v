@@ -13,11 +13,7 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
 	input cpu_read_m2;
 	input cpu_write_m2;
 	input [`WORD_SIZE-1:0] cpu_address2;
-
 	inout [`WORD_SIZE-1:0] cpu_data2;
-
-	output cpu_inputReady2;
-    output cpu_ackOutput2;
 
     input cpu_read_m1;
     input [`WORD_SIZE-1:0] cpu_address1;
@@ -25,26 +21,26 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
 
     output cpu_inputReady1;
     wire cpu_ackOutput1;
+   	output cpu_inputReady2;
+    output cpu_ackOutput2;
 
     // I/O between Memory
 	output read_m2;
 	output write_m2;
 	output [`WORD_SIZE-1:0] address2;
-
 	inout [4*`WORD_SIZE-1:0] data2;
-
-	input inputReady2;
-	input ackOutput2;
-
-    input cpu_valid2;
 
     input i_read_m1;
     output read_m1;
     output [`WORD_SIZE-1:0] address1;
     input [4*`WORD_SIZE-1:0] data1;
+
     input inputReady1;
+	input inputReady2;
+	input ackOutput2;
 
     input cpu_valid1;
+    input cpu_valid2;
 
     // Internal reg
     reg [`WORD_SIZE-1:0] cpu_res_data2;
@@ -60,8 +56,6 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
     reg mem_req_read2;
     reg mem_req_write2;
 
-
-
     // Assign
     // mem_req, data2
     assign read_m1 = mem_req_read1;
@@ -76,10 +70,6 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
     assign cpu_data2 = cpu_read_m2? cpu_res_data2: 'bz;
 
     assign data2 = read_m2? 'bz: mem_req_data2;
-
-    // assign data2 = read_m2? 'bz: {4{cpu_data2}};
-    // assign cpu_data2 = read_m2 && inputReady2 ? data2[`BLOCK_WORD_1] : 'bz;
-
 
     localparam
         CHECK = 2'b00,
@@ -588,7 +578,7 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
             // update hit count and memory count
             if (cpu_valid2) begin
                 previous_address <= cpu_address2;
-                if (rstate == CHECK && previous_address != cpu_address1) begin
+                if (rstate == CHECK && previous_address != cpu_address2) begin
                     memory_count <= memory_count + 1;
                     if (vstate == CHECK) begin
                         hit_count <= hit_count + 1;
@@ -596,7 +586,6 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
                 end
             end
         end
-        $display("D - hit: %d, memory: %d", hit_count, memory_count);
     end
 
     // connect cache tag/data memory

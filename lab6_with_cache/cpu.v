@@ -6,9 +6,7 @@
 `include "d_cache.v"
 `include "cache_module.v"
 
-module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, 
-		read_m2, write_m2, address2, data2, inputReady2, ackOutput2, 
-		num_inst, output_port, is_halted, valid2);
+module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2, num_inst, output_port, is_halted);
 
 	input clk;
 	input reset_n;
@@ -25,8 +23,6 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1,
 	input inputReady1;
 	input inputReady2;
 	input ackOutput2;
-
-	output valid2;
 
 	output [`WORD_SIZE-1:0] num_inst;
 	output [`WORD_SIZE-1:0] output_port;

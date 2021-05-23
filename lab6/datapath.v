@@ -102,6 +102,10 @@ module datapath(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, wr
 	// memory stall
 	reg instr_stall, mem_data_stall;
 
+	// requested address reg
+	reg[`WORD_SIZE-1:0] requested_address;
+	wire match_address;
+
 	initial begin
 		pc <= 0;
 		num_inst <= 0; output_port <= 0;
@@ -149,23 +153,29 @@ module datapath(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, wr
 	assign read_m2 = mem_read_mem;
 	assign address2 = alu_out_mem;
 	assign data2 = read_m2? `WORD_SIZE'bz: rf_rt_mem;
+	assign match_address = requested_address == address1;
 	
 	always @(*) begin
 		if (!reset_n) begin
 			instr_stall = 0;
 			mem_data_stall = 0;
+			requested_address = 0;
 		end else begin
-			if (read_m1 && !inputReady1) begin
+			if (read_m1 && (!inputReady1 || !match_address)) begin
 				instr_stall = 1;
 			end else begin
 				instr_stall = 0;
 			end
 
+			// if (inputReady1) begin
+			// 	requested_address = pc;
+			// end
+
 			if ((read_m2 && !inputReady2) || (write_m2 && !ackOutput2)) begin
 				mem_data_stall = 1;
 			end else begin
 				mem_data_stall = 0;
-			end
+			end 
 		end
 	end
 
@@ -189,6 +199,20 @@ module datapath(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, wr
 				mem_read_data <= mem_read_data;
 			end else if (read_m2) begin
 				mem_read_data <= data2;
+			end
+		end
+	end
+
+	always @(posedge clk) begin
+		if (!reset_n) begin
+			requested_address <= 0;
+		end else begin
+			if (inputReady1) begin
+				if (!instr_stall) begin
+					requested_address <= pc_nxt;
+				end else begin
+					requested_address <= address1;
+				end
 			end
 		end
 	end
