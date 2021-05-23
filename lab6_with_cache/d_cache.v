@@ -3,8 +3,7 @@
 
 module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_data2, cpu_inputReady2, cpu_ackOutput2,
         read_m2, write_m2, address2, data2, inputReady2, ackOutput2, cpu_valid2,
-        cpu_read_m1, cpu_address1, cpu_data1, cpu_inputReady1,
-        i_read_m1, read_m1, address1, data1, inputReady1, cpu_valid1);
+        i_read_m1, read_m1, address1, data1, inputReady1);
 
     input clk;
 	input reset_n;
@@ -15,11 +14,6 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
 	input [`WORD_SIZE-1:0] cpu_address2;
 	inout [`WORD_SIZE-1:0] cpu_data2;
 
-    input cpu_read_m1;
-    input [`WORD_SIZE-1:0] cpu_address1;
-    output [`WORD_SIZE-1:0] cpu_data1;
-
-    output cpu_inputReady1;
     wire cpu_ackOutput1;
    	output cpu_inputReady2;
     output cpu_ackOutput2;
@@ -39,7 +33,6 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
 	input inputReady2;
 	input ackOutput2;
 
-    input cpu_valid1;
     input cpu_valid2;
 
     // Internal reg

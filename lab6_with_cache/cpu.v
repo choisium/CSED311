@@ -106,17 +106,11 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 		.cpu_valid2(cpu_valid2),
 
 		// memory port 1 related
-		.cpu_read_m1(cpu_read_m1),
-		.cpu_address1(cpu_address1),
-		.cpu_data1(cpu_data1),
-		.cpu_inputReady1(cpu_inputReady1),
-		
 		.i_read_m1(i_read_m1),
 		.read_m1(d_read_m1),
 		.address1(d_address1),
 		.data1(data1),
-		.inputReady1(inputReady1),
-		.cpu_valid1(cpu_valid1)
+		.inputReady1(inputReady1)
 	);
 
 endmodule
