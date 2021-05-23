@@ -167,10 +167,6 @@ module datapath(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, wr
 				instr_stall = 0;
 			end
 
-			// if (inputReady1) begin
-			// 	requested_address = pc;
-			// end
-
 			if ((read_m2 && !inputReady2) || (write_m2 && !ackOutput2)) begin
 				mem_data_stall = 1;
 			end else begin
