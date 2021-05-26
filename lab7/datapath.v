@@ -8,7 +8,7 @@
 `include "immediate_generator.v"
 `include "forwarding_unit.v"
 
-module datapath(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2, num_inst, output_port, is_halted, interrupt);
+module datapath(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2, num_inst, output_port, is_halted);
 
 	input clk;
 	input reset_n;
@@ -25,8 +25,6 @@ module datapath(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, wr
 	input inputReady1;
 	input inputReady2;
 	input ackOutput2;
-
-	input interrupt;
 
 	output reg [`WORD_SIZE-1:0] num_inst;
 	output reg [`WORD_SIZE-1:0] output_port;

@@ -7,7 +7,7 @@
 `include "cache_module.v"
 
 module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2, num_inst, output_port, is_halted,
-	ex_interrupt, dma_interrupt, dma_valid, address, dataLength);
+	ex_interrupt, dma_interrupt, dma_valid, address, dataLength, busGrant, busRequest);
 
 	input clk;
 	input reset_n;
@@ -36,9 +36,13 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 	// ports for DMA
 	input ex_interrupt;
 	input dma_interrupt;
+	input busRequest;
+
 	output reg dma_valid;
 	output reg [`WORD_SIZE-1:0] address;
 	output reg [`WORD_SIZE-1:0] dataLength;
+	output reg busGrant;
+
 
 	// wires for memory access
 	wire cpu_read_m1;
@@ -61,6 +65,7 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 
 	// wires for DMA
 	reg interrupt;
+	reg bus_access;
 
 	// assignments for memory access
 	assign read_m1 = i_read_m1 | d_read_m1;
@@ -71,6 +76,8 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 	initial begin
 		interrupt <= 0;
 		dma_valid <= 0;
+		busGrant <= 0;
+		bus_access <= 1;
 	end
 
 	always @(*) begin
@@ -81,6 +88,13 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 			dataLength <= 12;
 		end else begin
 			dma_valid <= 0;
+		end
+
+		if (busRequest) begin
+			if (!read_m2 && !write_m2) begin
+				bus_access <= 0;
+				busGrant <= 1;
+			end
 		end
 	end
 	
@@ -100,8 +114,7 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 		.ackOutput2(cpu_ackOutput2),
 		.num_inst(num_inst),
 		.output_port(output_port),
-		.is_halted(is_halted),
-		.interrupt(interrupt)
+		.is_halted(is_halted)
 	);
 
 	instr_cache I_Cache(
@@ -144,7 +157,10 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 		.read_m1(d_read_m1),
 		.address1(d_address1),
 		.data1(data1),
-		.inputReady1(inputReady1)
+		.inputReady1(inputReady1),
+
+		// dma
+		.busAccess(bus_access)
 	);
 
 endmodule

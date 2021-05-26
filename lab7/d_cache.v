@@ -3,7 +3,7 @@
 
 module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_data2, cpu_inputReady2, cpu_ackOutput2,
         read_m2, write_m2, address2, data2, inputReady2, ackOutput2, cpu_valid2,
-        i_read_m1, read_m1, address1, data1, inputReady1);
+        i_read_m1, read_m1, address1, data1, inputReady1, busAccess);
 
     input clk;
 	input reset_n;
@@ -13,6 +13,8 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
 	input cpu_write_m2;
 	input [`WORD_SIZE-1:0] cpu_address2;
 	inout [`WORD_SIZE-1:0] cpu_data2;
+
+    input busAccess;
 
     wire cpu_ackOutput1;
    	output cpu_inputReady2;
@@ -277,45 +279,12 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
 
                     // cache miss
                     else begin
+                        if (busAccess) begin
+                            if(!RECENT_way1 && !RECENT_way2) begin
+                                // if both way is not used, allocate to way 1
+                                UPDATE_WAY1 = 1;
+                                UPDATE_WAY2 = 0;
 
-                        if(!RECENT_way1 && !RECENT_way2) begin
-                            // if both way is not used, allocate to way 1
-                            UPDATE_WAY1 = 1;
-                            UPDATE_WAY2 = 0;
-
-                            // generate memory request on miss
-                            mem_req_read2 = 1;
-                            // memory request address (sampled from CPU request)
-                            mem_req_addr2 = {cpu_address2[15:2], 2'b0};
-                            // wait until new block allocated
-                            vstate = ALLOCATE;
-                        end
-
-                        else if (!RECENT_way1) begin
-                            // evict way 1
-                            UPDATE_WAY1 = 1;
-                            UPDATE_WAY2 = 0;
-
-                            // if evict line is dirty, write back it to memory
-                            if (VALID_way1 && DIRTY_way1) begin
-                                // generate memory write request for dirty line
-                                mem_req_write2 = 1;
-                                // memory request address (sampled from cache tag)
-                                mem_req_addr2 = {tag_read_way1[`CACHE_TAG], ADDRESS_IDX, 2'b00};
-                                mem_req_data2 = data_read_way1;
-                                if (!i_read_m1) begin
-                                    // port 1 is not using. use port1 to read data
-                                    mem_req_addr1 = {cpu_address2[15:2], 2'b0};
-                                    mem_req_read1 = 1;
-
-                                    vstate = WRITE_ALLOCATE;
-                                end else begin
-                                    // wait until write back done
-                                    vstate = WRITE_BACK;
-                                end
-                            end
-
-                            else begin
                                 // generate memory request on miss
                                 mem_req_read2 = 1;
                                 // memory request address (sampled from CPU request)
@@ -323,40 +292,76 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
                                 // wait until new block allocated
                                 vstate = ALLOCATE;
                             end
-                        end
 
-                        else begin
-                            // evict way 2
-                            UPDATE_WAY1 = 0;
-                            UPDATE_WAY2 = 1;
+                            else if (!RECENT_way1) begin
+                                // evict way 1
+                                UPDATE_WAY1 = 1;
+                                UPDATE_WAY2 = 0;
 
-                            // if evict line is dirty, write back it to memory
-                            if (VALID_way2 && DIRTY_way2) begin
-                                // generate memory write request for dirty line
-                                mem_req_write2 = 1;
-                                // memory request address (sampled from cache tag)
-                                mem_req_addr2 = {tag_read_way2[`CACHE_TAG], ADDRESS_IDX, 2'b00};
-                                mem_req_data2 = data_read_way2;
-                                if (!i_read_m1) begin
-                                    // port 1 is not using. use port1 to read data
-                                    mem_req_addr1 = {cpu_address2[15:2], 2'b0};
-                                    mem_req_read1 = 1;
+                                // if evict line is dirty, write back it to memory
+                                if (VALID_way1 && DIRTY_way1) begin
+                                    // generate memory write request for dirty line
+                                    mem_req_write2 = 1;
+                                    // memory request address (sampled from cache tag)
+                                    mem_req_addr2 = {tag_read_way1[`CACHE_TAG], ADDRESS_IDX, 2'b00};
+                                    mem_req_data2 = data_read_way1;
+                                    if (!i_read_m1) begin
+                                        // port 1 is not using. use port1 to read data
+                                        mem_req_addr1 = {cpu_address2[15:2], 2'b0};
+                                        mem_req_read1 = 1;
 
-                                    vstate = WRITE_ALLOCATE;
-                                end else begin
-                                    // wait until write back done
-                                    vstate = WRITE_BACK;
+                                        vstate = WRITE_ALLOCATE;
+                                    end else begin
+                                        // wait until write back done
+                                        vstate = WRITE_BACK;
+                                    end
+                                end
+
+                                else begin
+                                    // generate memory request on miss
+                                    mem_req_read2 = 1;
+                                    // memory request address (sampled from CPU request)
+                                    mem_req_addr2 = {cpu_address2[15:2], 2'b0};
+                                    // wait until new block allocated
+                                    vstate = ALLOCATE;
                                 end
                             end
 
                             else begin
-                                // generate memory request on miss
-                                mem_req_read2 = 1;
-                                // memory request address (sampled from CPU request)
-                                mem_req_addr2 = {cpu_address2[15:2], 2'b0};
-                                // wait until new block allocated
-                                vstate = ALLOCATE;
+                                // evict way 2
+                                UPDATE_WAY1 = 0;
+                                UPDATE_WAY2 = 1;
+
+                                // if evict line is dirty, write back it to memory
+                                if (VALID_way2 && DIRTY_way2) begin
+                                    // generate memory write request for dirty line
+                                    mem_req_write2 = 1;
+                                    // memory request address (sampled from cache tag)
+                                    mem_req_addr2 = {tag_read_way2[`CACHE_TAG], ADDRESS_IDX, 2'b00};
+                                    mem_req_data2 = data_read_way2;
+                                    if (!i_read_m1) begin
+                                        // port 1 is not using. use port1 to read data
+                                        mem_req_addr1 = {cpu_address2[15:2], 2'b0};
+                                        mem_req_read1 = 1;
+
+                                        vstate = WRITE_ALLOCATE;
+                                    end else begin
+                                        // wait until write back done
+                                        vstate = WRITE_BACK;
+                                    end
+                                end
+
+                                else begin
+                                    // generate memory request on miss
+                                    mem_req_read2 = 1;
+                                    // memory request address (sampled from CPU request)
+                                    mem_req_addr2 = {cpu_address2[15:2], 2'b0};
+                                    // wait until new block allocated
+                                    vstate = ALLOCATE;
+                                end
                             end
+                        end else begin
+                            vstate = CHECK;
                         end
                     end
                 end

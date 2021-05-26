@@ -13,7 +13,7 @@ reg [`WORD_SIZE-1:0] num_clk; // num_clk to count cycles and trigger interrupt a
 reg [`WORD_SIZE-1:0] data [0:`WORD_SIZE-1]; // data to transfer
 
 localparam
-	INTERRUPT_CLK = 'd100;
+	INTERRUPT_CLK = 'd184;
 
 always @(posedge clk) begin
 	if(!reset_n) begin
