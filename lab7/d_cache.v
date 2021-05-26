@@ -64,7 +64,7 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
     assign cpu_ackOutput2 = cpu_res_ackOutput2;
     assign cpu_data2 = cpu_read_m2? cpu_res_data2: 'bz;
 
-    assign data2 = read_m2? 'bz: mem_req_data2;
+    assign data2 = busAccess? (read_m2? 'bz: mem_req_data2): 'bz;
 
     localparam
         CHECK = 2'b00,

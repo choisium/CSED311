@@ -58,8 +58,9 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 	wire cpu_inputReady2;
 	wire cpu_ackOutput2;
 
-	wire i_read_m1, d_read_m1;
-	wire [`WORD_SIZE-1:0] i_address1, d_address1;
+	wire i_read_m1, d_read_m1, d_read_m2, d_write_m2;
+	wire [`WORD_SIZE-1:0] i_address1, d_address1, d_address2;
+	wire [4*`WORD_SIZE-1:0] d_data2;
 	wire cpu_valid1;
 	wire cpu_valid2;
 
@@ -73,11 +74,23 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 	assign cpu_valid1 = cpu_read_m1;
 	assign cpu_valid2 = cpu_read_m2 | cpu_write_m2;
 
+	assign read_m2 = busGrant? 0: d_read_m2;
+	assign write_m2 = busGrant? 'bz: d_write_m2;
+	assign address2 = busGrant? 'bz: d_address2;
+	assign data2 = busGrant? 'bz : (read_m2? 'bz: d_data2);
+	assign d_data2 = busGrant ? 'bz : (read_m2? data2: 'bz);
+
 	initial begin
 		interrupt <= 0;
 		dma_valid <= 0;
 		busGrant <= 0;
 		bus_access <= 1;
+	end
+
+	always @(posedge clk) begin
+		if (busRequest && !bus_access) begin
+			busGrant <= 1;
+		end
 	end
 
 	always @(*) begin
@@ -93,8 +106,15 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 		if (busRequest) begin
 			if (!read_m2 && !write_m2) begin
 				bus_access <= 0;
-				busGrant <= 1;
 			end
+		end
+
+		if (busGrant && !busRequest) begin
+			busGrant <= 0;
+		end
+
+		if (dma_interrupt) begin
+			bus_access <= 1;
 		end
 	end
 	
@@ -144,10 +164,14 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 		.cpu_inputReady2(cpu_inputReady2),
 		.cpu_ackOutput2(cpu_ackOutput2),
 		
-		.read_m2(read_m2),
-		.write_m2(write_m2),
-		.address2(address2),
-		.data2(data2),
+		// .read_m2(read_m2),
+		// .write_m2(write_m2),
+		// .address2(address2),
+		// .data2(data2),
+		.read_m2(d_read_m2),
+		.write_m2(d_write_m2),
+		.address2(d_address2),
+		.data2(d_data2),
 		.inputReady2(inputReady2),
 		.ackOutput2(ackOutput2),
 		.cpu_valid2(cpu_valid2),

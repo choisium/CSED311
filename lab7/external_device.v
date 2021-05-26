@@ -2,18 +2,37 @@
 `define WORD_SIZE 16
 
 // TODO: implement your external_device module
-module external_device (clk, reset_n, interrupt);
+module external_device (clk, reset_n, interrupt, ex_valid, offset, data2);
 
 input clk;
 input reset_n;
 
+// interact to CPU
 output reg interrupt;
 
+// interact to DMA controller
+input ex_valid;
+input [`WORD_SIZE-1:0] offset;
+
+// interact to Memory
+inout [4*`WORD_SIZE-1:0] data2;
+
+// internal reg and wire
 reg [`WORD_SIZE-1:0] num_clk; // num_clk to count cycles and trigger interrupt at appropriate cycle
 reg [`WORD_SIZE-1:0] data [0:`WORD_SIZE-1]; // data to transfer
+reg [4*`WORD_SIZE-1:0] output_data;
 
 localparam
 	INTERRUPT_CLK = 'd184;
+
+// assign data2 = 'bz;
+
+assign data2 = ex_valid? output_data: 'bz;
+
+always @(*) begin
+	output_data = {data[4 * offset], data[4 * offset + 1], data[4 * offset + 2], data[4 * offset + 3]};
+end
+
 
 always @(posedge clk) begin
 	if(!reset_n) begin
