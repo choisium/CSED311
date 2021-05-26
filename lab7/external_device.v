@@ -1,19 +1,19 @@
 `timescale 1ns/1ns
-`define WORD_SIZE 16 
+`define WORD_SIZE 16
 
 // TODO: implement your external_device module
-module external_device (clk, reset_n);
+module external_device (clk, reset_n, interrupt);
 
 input clk;
 input reset_n;
 
+output reg interrupt;
+
 reg [`WORD_SIZE-1:0] num_clk; // num_clk to count cycles and trigger interrupt at appropriate cycle
 reg [`WORD_SIZE-1:0] data [0:`WORD_SIZE-1]; // data to transfer
 
-
-always @(*) begin
-	// TODO: implement your combinational logic
-end
+localparam
+	INTERRUPT_CLK = 'd100;
 
 always @(posedge clk) begin
 	if(!reset_n) begin
@@ -33,7 +33,12 @@ always @(posedge clk) begin
 	end
 	else begin
 		num_clk <= num_clk+1;
-		// TODO: implement your sequential logic
+
+		if (num_clk == INTERRUPT_CLK) begin
+			interrupt <= 1;
+		end else begin
+			interrupt <= 0;
+		end
 	end
 end
 endmodule
