@@ -28,7 +28,6 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 	input ackOutput2;
 
 	// ports for testbench
-
 	output [`WORD_SIZE-1:0] num_inst;
 	output [`WORD_SIZE-1:0] output_port;
 	output is_halted;
@@ -172,10 +171,6 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 		.cpu_inputReady2(cpu_inputReady2),
 		.cpu_ackOutput2(cpu_ackOutput2),
 		
-		// .read_m2(read_m2),
-		// .write_m2(write_m2),
-		// .address2(address2),
-		// .data2(data2),
 		.read_m2(d_read_m2),
 		.write_m2(d_write_m2),
 		.address2(d_address2),
