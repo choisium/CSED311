@@ -88,6 +88,7 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 
 	always @(posedge clk) begin
 		if (busRequest && !bus_access) begin
+			// 5. CPU raises a BusGranted signal
 			busGrant <= 1;
 		end
 	end
