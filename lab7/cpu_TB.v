@@ -38,7 +38,7 @@ module cpu_TB();
 		ex_interrupt, dma_interrupt, dma_valid, address, dataLength, busGrant, busRequest);
 	Memory NUUT(!clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2);
 	external_device EX(clk, reset_n, ex_interrupt, ex_valid, offset, data2);
-	dma_controller DMA(clk, reset_n, dma_interrupt, dma_valid, address, dataLength, busGrant, busRequest, ex_valid, offset, write_m2, address2, ackOutput2);
+	dma_controller DMA(clk, reset_n, dma_interrupt, dma_valid, address, dataLength, busGrant, busRequest, ex_valid, offset, read_m2, write_m2, address2, ackOutput2);
 
 	// initialize inputs
 	initial begin

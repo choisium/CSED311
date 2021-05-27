@@ -65,7 +65,6 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 	wire cpu_valid2;
 
 	// wires for DMA
-	reg interrupt;
 	reg bus_access;
 
 	// assignments for memory access
@@ -74,14 +73,14 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 	assign cpu_valid1 = cpu_read_m1;
 	assign cpu_valid2 = cpu_read_m2 | cpu_write_m2;
 
-	assign read_m2 = busGrant? 0: d_read_m2;
+	// when busGrant is asserted, block cpu's usage of memory port2
+	assign read_m2 = busGrant? 'bz: d_read_m2;
 	assign write_m2 = busGrant? 'bz: d_write_m2;
 	assign address2 = busGrant? 'bz: d_address2;
 	assign data2 = busGrant? 'bz : (read_m2? 'bz: d_data2);
 	assign d_data2 = busGrant ? 'bz : (read_m2? data2: 'bz);
 
 	initial begin
-		interrupt <= 0;
 		dma_valid <= 0;
 		busGrant <= 0;
 		bus_access <= 1;
@@ -93,28 +92,36 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 		end
 	end
 
+	// use combinational logic so that CPU is always ready for the interrupt
 	always @(*) begin
+		// 2. CPU send a address and dataLength to a DMA controller
 		if (ex_interrupt) begin
 			dma_valid <= 1;
-			interrupt <= 1;
 			address <= 16'h17;
 			dataLength <= 12;
 		end else begin
+			// dma_valid is asserted for only one cycle
 			dma_valid <= 0;
 		end
 
+		// 4. CPU receive BusRequest signal and blocks its usage of the memory port2
 		if (busRequest) begin
+			// when current memory access is done
+			// deassert the bus_access to block future memory access
 			if (!read_m2 && !write_m2) begin
 				bus_access <= 0;
 			end
 		end
 
+		// 9. CPU clears the BG signals and enables the usage of memory buses
 		if (busGrant && !busRequest) begin
 			busGrant <= 0;
+			bus_access <= 1;
 		end
 
+		// 11. The CPU handles the interrupt from DMA controller
 		if (dma_interrupt) begin
-			bus_access <= 1;
+			// I don't know what to do here...
 		end
 	end
 	

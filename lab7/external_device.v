@@ -25,8 +25,7 @@ reg [4*`WORD_SIZE-1:0] output_data;
 localparam
 	INTERRUPT_CLK = 'd184;
 
-// assign data2 = 'bz;
-
+// when ex_valid is asserted, send data through data bus
 assign data2 = ex_valid? output_data: 'bz;
 
 always @(*) begin
@@ -53,9 +52,11 @@ always @(posedge clk) begin
 	else begin
 		num_clk <= num_clk+1;
 
+		// 1. An external device sends an interrupt to a CPU
 		if (num_clk == INTERRUPT_CLK) begin
 			interrupt <= 1;
 		end else begin
+			// the interrupt is kept for one cycle
 			interrupt <= 0;
 		end
 	end

@@ -64,6 +64,7 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
     assign cpu_ackOutput2 = cpu_res_ackOutput2;
     assign cpu_data2 = cpu_read_m2? cpu_res_data2: 'bz;
 
+    // when busAccess is deasserted, cut the connection to data bus
     assign data2 = busAccess? (read_m2? 'bz: mem_req_data2): 'bz;
 
     localparam
@@ -279,7 +280,10 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
 
                     // cache miss
                     else begin
-                        if (busAccess) begin
+                        if (!busAccess) begin
+                            // if busAccess is not asserted, cache cannot use memory
+                            vstate = CHECK;
+                        end else begin
                             if(!RECENT_way1 && !RECENT_way2) begin
                                 // if both way is not used, allocate to way 1
                                 UPDATE_WAY1 = 1;
@@ -360,8 +364,6 @@ module data_cache(clk, reset_n, cpu_read_m2, cpu_write_m2, cpu_address2, cpu_dat
                                     vstate = ALLOCATE;
                                 end
                             end
-                        end else begin
-                            vstate = CHECK;
                         end
                     end
                 end
