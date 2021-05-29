@@ -73,23 +73,16 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 	assign cpu_valid2 = cpu_read_m2 | cpu_write_m2;
 
 	// when busGrant is asserted, block cpu's usage of memory port2
-	assign read_m2 = busGrant? 'bz: d_read_m2;
-	assign write_m2 = busGrant? 'bz: d_write_m2;
-	assign address2 = busGrant? 'bz: d_address2;
-	assign data2 = busGrant? 'bz : (read_m2? 'bz: d_data2);
-	assign d_data2 = busGrant ? 'bz : (read_m2? data2: 'bz);
+	assign read_m2 = bus_access? d_read_m2 : 'bz;
+	assign write_m2 = bus_access? d_write_m2 : 'bz;
+	assign address2 = bus_access? d_address2 : 'bz;
+	assign data2 = bus_access? (read_m2? 'bz: d_data2) : 'bz;
+	assign d_data2 = bus_access ? (read_m2? data2: 'bz) : 'bz;
 
 	initial begin
 		dma_valid <= 0;
 		busGrant <= 0;
 		bus_access <= 1;
-	end
-
-	always @(posedge clk) begin
-		if (busRequest && !bus_access) begin
-			// 5. CPU raises a BusGranted signal
-			busGrant <= 1;
-		end
 	end
 
 	// use combinational logic so that CPU is always ready for the interrupt
@@ -110,6 +103,7 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 			// deassert the bus_access to block future memory access
 			if (!read_m2 && !write_m2) begin
 				bus_access = 0;
+				busGrant <= 1;
 			end
 		end
 
