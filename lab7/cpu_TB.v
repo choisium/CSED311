@@ -25,9 +25,20 @@ module cpu_TB();
 	wire [`WORD_SIZE-1:0] output_port;	// this will be used for a "WWD" instruction
 	wire is_halted;				// set if the cpu is halted
 
+	// for DMA
+	wire ex_interrupt, dma_interrupt, dma_valid;
+	wire [`WORD_SIZE-1:0] address;
+	wire [`WORD_SIZE-1:0] dataLength;
+	wire busGrant, busRequest;
+	wire ex_valid;
+	wire [`WORD_SIZE-1:0] offset;
+
 	// instantiate the unit under test
-	cpu UUT (clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2, num_inst, output_port, is_halted);
+	cpu UUT (clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2, num_inst, output_port, is_halted,
+		ex_interrupt, dma_interrupt, dma_valid, address, dataLength, busGrant, busRequest);
 	Memory NUUT(!clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2);
+	external_device EX(clk, reset_n, ex_interrupt, ex_valid, offset, data2);
+	dma_controller DMA(clk, reset_n, dma_interrupt, dma_valid, address, dataLength, busGrant, busRequest, ex_valid, offset, read_m2, write_m2, address2, ackOutput2);
 
 	// initialize inputs
 	initial begin

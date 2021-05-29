@@ -1,19 +1,37 @@
 `timescale 1ns/1ns
-`define WORD_SIZE 16 
+`define WORD_SIZE 16
 
 // TODO: implement your external_device module
-module external_device (clk, reset_n);
+module external_device (clk, reset_n, interrupt, ex_valid, offset, data2);
 
 input clk;
 input reset_n;
 
+// interact to CPU
+output reg interrupt;
+
+// interact to DMA controller
+input ex_valid;
+input [`WORD_SIZE-1:0] offset;
+
+// interact to Memory
+inout [4*`WORD_SIZE-1:0] data2;
+
+// internal reg and wire
 reg [`WORD_SIZE-1:0] num_clk; // num_clk to count cycles and trigger interrupt at appropriate cycle
 reg [`WORD_SIZE-1:0] data [0:`WORD_SIZE-1]; // data to transfer
+reg [4*`WORD_SIZE-1:0] output_data;
 
+localparam
+	INTERRUPT_CLK = 'd184;
+
+// when ex_valid is asserted, send data through data bus
+assign data2 = ex_valid? output_data: 'bz;
 
 always @(*) begin
-	// TODO: implement your combinational logic
+	output_data = {data[4 * offset], data[4 * offset + 1], data[4 * offset + 2], data[4 * offset + 3]};
 end
+
 
 always @(posedge clk) begin
 	if(!reset_n) begin
@@ -33,7 +51,14 @@ always @(posedge clk) begin
 	end
 	else begin
 		num_clk <= num_clk+1;
-		// TODO: implement your sequential logic
+
+		// 1. An external device sends an interrupt to a CPU
+		if (num_clk == INTERRUPT_CLK) begin
+			interrupt <= 1;
+		end else begin
+			// the interrupt is kept for one cycle
+			interrupt <= 0;
+		end
 	end
 end
 endmodule

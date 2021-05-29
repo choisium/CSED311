@@ -6,10 +6,13 @@
 `include "d_cache.v"
 `include "cache_module.v"
 
-module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2, num_inst, output_port, is_halted);
+module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2, num_inst, output_port, is_halted,
+	ex_interrupt, dma_interrupt, dma_valid, address, dataLength, busGrant, busRequest);
 
 	input clk;
 	input reset_n;
+
+	// ports for memory access
 
 	output read_m1;
 	output [`WORD_SIZE-1:0] address1;
@@ -24,10 +27,23 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 	input inputReady2;
 	input ackOutput2;
 
+	// ports for testbench
 	output [`WORD_SIZE-1:0] num_inst;
 	output [`WORD_SIZE-1:0] output_port;
 	output is_halted;
 
+	// ports for DMA
+	input ex_interrupt;
+	input dma_interrupt;
+	input busRequest;
+
+	output reg dma_valid;
+	output reg [`WORD_SIZE-1:0] address;
+	output reg [`WORD_SIZE-1:0] dataLength;
+	output reg busGrant;
+
+
+	// wires for memory access
 	wire cpu_read_m1;
 	wire [`WORD_SIZE-1:0] cpu_address1;
 	wire cpu_read_m2;
@@ -41,15 +57,71 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 	wire cpu_inputReady2;
 	wire cpu_ackOutput2;
 
-	wire i_read_m1, d_read_m1;
-	wire [`WORD_SIZE-1:0] i_address1, d_address1;
+	wire i_read_m1, d_read_m1, d_read_m2, d_write_m2;
+	wire [`WORD_SIZE-1:0] i_address1, d_address1, d_address2;
+	wire [4*`WORD_SIZE-1:0] d_data2;
 	wire cpu_valid1;
 	wire cpu_valid2;
 
+	// wires for DMA
+	reg bus_access;
+
+	// wire for halt CPU datapath
+	wire interrupt;
+	assign interrupt = ex_interrupt | dma_interrupt;
+
+	// assignments for memory access
 	assign read_m1 = i_read_m1 | d_read_m1;
 	assign address1 = i_read_m1? i_address1: d_address1;
 	assign cpu_valid1 = cpu_read_m1;
 	assign cpu_valid2 = cpu_read_m2 | cpu_write_m2;
+
+	// when busGrant is asserted, block cpu's usage of memory port2
+	assign read_m2 = bus_access? d_read_m2 : 'bz;
+	assign write_m2 = bus_access? d_write_m2 : 'bz;
+	assign address2 = bus_access? d_address2 : 'bz;
+	assign data2 = bus_access? (read_m2? 'bz: d_data2) : 'bz;
+	assign d_data2 = bus_access ? (read_m2? data2: 'bz) : 'bz;
+
+	initial begin
+		dma_valid <= 0;
+		busGrant <= 0;
+		bus_access <= 1;
+	end
+
+	// use combinational logic so that CPU is always ready for the interrupt
+	always @(*) begin
+		// 2. CPU send a address and dataLength to a DMA controller
+		if (ex_interrupt) begin
+			dma_valid = 1;
+			address = 16'h17;
+			dataLength = 12;
+		end else begin
+			// dma_valid is asserted for only one cycle
+			dma_valid = 0;
+		end
+
+		// 4. CPU receive BusRequest signal and blocks its usage of the memory port2
+		if (busRequest) begin
+			// when current memory access is done
+			// deassert the bus_access to block future memory access
+			if (!read_m2 && !write_m2) begin
+				bus_access = 0;
+				busGrant = 1;
+			end
+		end
+
+		// 9. CPU clears the BG signals and enables the usage of memory buses
+		if (busGrant && !busRequest) begin
+			busGrant = 0;
+			bus_access = 1;
+		end
+
+		// 11. The CPU handles the interrupt from DMA controller
+		if (dma_interrupt) begin
+			// do nothing
+		end
+	end
 	
 	//TODO: implement pipelined CPU
 	datapath Datapath(
@@ -65,6 +137,7 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 		.data2(cpu_data2),
 		.inputReady2(cpu_inputReady2),
 		.ackOutput2(cpu_ackOutput2),
+		.interrupt(interrupt),
 		.num_inst(num_inst),
 		.output_port(output_port),
 		.is_halted(is_halted)
@@ -97,10 +170,10 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 		.cpu_inputReady2(cpu_inputReady2),
 		.cpu_ackOutput2(cpu_ackOutput2),
 		
-		.read_m2(read_m2),
-		.write_m2(write_m2),
-		.address2(address2),
-		.data2(data2),
+		.read_m2(d_read_m2),
+		.write_m2(d_write_m2),
+		.address2(d_address2),
+		.data2(d_data2),
 		.inputReady2(inputReady2),
 		.ackOutput2(ackOutput2),
 		.cpu_valid2(cpu_valid2),
@@ -110,7 +183,10 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 		.read_m1(d_read_m1),
 		.address1(d_address1),
 		.data1(data1),
-		.inputReady1(inputReady1)
+		.inputReady1(inputReady1),
+
+		// dma
+		.busAccess(bus_access)
 	);
 
 endmodule
