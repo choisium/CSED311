@@ -8,7 +8,7 @@
 `include "immediate_generator.v"
 `include "forwarding_unit.v"
 
-module datapath(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2, num_inst, output_port, is_halted);
+module datapath(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m2, address2, data2, inputReady2, ackOutput2, interrupt, num_inst, output_port, is_halted);
 
 	input clk;
 	input reset_n;
@@ -25,7 +25,9 @@ module datapath(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, wr
 	input inputReady1;
 	input inputReady2;
 	input ackOutput2;
-
+	
+	input interrupt;
+	
 	output reg [`WORD_SIZE-1:0] num_inst;
 	output reg [`WORD_SIZE-1:0] output_port;
 	output is_halted;
@@ -173,7 +175,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, wr
 	always @(posedge clk) begin
 		if (!reset_n) begin
 			instr <= 0;
-		end else if(stall || instr_stall || mem_data_stall) begin
+		end else if(stall || instr_stall || mem_data_stall || interrupt) begin
 			instr <= instr;
 		end else begin
 			instr <= data1;
@@ -247,17 +249,17 @@ module datapath(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, wr
 		end
 		else begin
 			// update pc
-			if(!flush && (stall || instr_stall || mem_data_stall)) begin
+			if(!flush && (stall || instr_stall || mem_data_stall || interrupt)) begin
 				pc <= pc;
 			end else begin
 				pc <= pc_nxt;
 			end
 
 			// update IF/ID pipeline register (instr from data)
-			if(!flush && !stall && !instr_stall && !mem_data_stall) begin
+			if(!flush && !stall && !instr_stall && !mem_data_stall && !interrupt) begin
 				pc_id <= pc;
 				new_inst_id <= 1'b1;
-			end else if(!flush && (stall || instr_stall || mem_data_stall)) begin // stall
+			end else if(!flush && (stall || instr_stall || mem_data_stall || interrupt)) begin // stall
 				pc_id <= pc_id;
 				new_inst_id <= new_inst_id;
 			end	else begin // flush
@@ -266,10 +268,10 @@ module datapath(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, wr
 			end
 			
 			// update ID/EX pipeline register
-			if(!flush & !stall & !instr_stall & !mem_data_stall) begin
+			if(!flush & !stall & !instr_stall & !mem_data_stall && !interrupt) begin
 				target <= instr[11:0]; pc_ex <= pc_id; rf_rs_ex <= rf_rs; rf_rt_ex <= rf_rt; immed_ex <= immed_id;
 				rs_ex <= instr[11:10]; rt_ex <= instr[9:8]; rd_ex <= rd_id;
-			end else if (mem_data_stall) begin
+			end else if (mem_data_stall || interrupt) begin
 				target <= target; pc_ex <= pc_ex; rf_rs_ex <= rf_rs_ex; rf_rt_ex <= rf_rt_ex; immed_ex <= immed_ex;
 				rs_ex <= rs_ex; rt_ex <= rt_ex; rd_ex <= rd_ex;
 			end else begin
@@ -279,12 +281,12 @@ module datapath(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, wr
 			end
 			
 			// update ID/EX control
-			if(!flush && !stall && !instr_stall && !mem_data_stall && pc_id != `WORD_SIZE'hffff) begin
+			if(!flush && !stall && !instr_stall && !mem_data_stall && !interrupt && pc_id != `WORD_SIZE'hffff) begin
 				alu_src_ex <= alu_src_id; branch_ex <= branch_id; pc_src_ex <= pc_src_id; 
 				alu_branch_type_ex <= alu_branch_type_id; alu_func_code_ex <= alu_func_code_id;
 				mem_read_ex <= mem_read_id; mem_write_ex <= mem_write_id;
 				halt_ex <= halt_id; wwd_ex <= wwd_id; new_inst_ex <= new_inst_id; reg_write_ex <= reg_write_id; reg_src_ex <= reg_src_id;
-			end else if (mem_data_stall) begin
+			end else if (mem_data_stall || interrupt) begin
 				alu_src_ex <= alu_src_ex; branch_ex <= branch_ex; pc_src_ex <= pc_src_ex;
 				alu_branch_type_ex <= alu_branch_type_ex; alu_func_code_ex <= alu_func_code_ex;
 				mem_read_ex <= mem_read_ex; mem_write_ex <= mem_write_ex;
@@ -297,7 +299,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, wr
 			end
 
 			// update EX/MEM pipeline register
-			if (!mem_data_stall) begin
+			if (!mem_data_stall && !interrupt) begin
 				pc_mem <= pc_ex; rf_rs_mem <= rf_rs_forwarded; rf_rt_mem <= rf_rt_ex; alu_out_mem <= alu_out_ex;
 				rd_mem <= rd_ex;
 			end else begin
@@ -306,7 +308,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, wr
 			end
 
 			// update EX/MEM control signals
-			if (!mem_data_stall) begin
+			if (!mem_data_stall && !interrupt) begin
 				mem_read_mem <= mem_read_ex; mem_write_mem <= mem_write_ex;
 				halt_mem <= halt_ex; wwd_mem <= wwd_ex; new_inst_mem <= new_inst_ex; reg_write_mem <= reg_write_ex; reg_src_mem <= reg_src_ex;
 			end else begin
@@ -315,7 +317,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, wr
 			end
 
 			// update MEM/WB pipeline register
-			if (!mem_data_stall) begin
+			if (!mem_data_stall && !interrupt) begin
 				pc_wb <= pc_mem; rf_rs_wb <= rf_rs_mem; alu_out_wb <= alu_out_mem;
 				rd_wb <= rd_mem;
 			end else begin
@@ -324,7 +326,7 @@ module datapath(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, wr
 			end
 
 			// update MEM/WB control signals
-			if (!mem_data_stall) begin
+			if (!mem_data_stall && !interrupt) begin
 				halt_wb <= halt_mem; wwd_wb <= wwd_mem; new_inst_wb <= new_inst_mem; reg_write_wb <= reg_write_mem; reg_src_wb <= reg_src_mem;
 			end else begin
 				halt_wb <= 0; wwd_wb <= 0; new_inst_wb <= 0; reg_write_wb <= reg_write_wb; reg_src_wb <= reg_src_wb;
