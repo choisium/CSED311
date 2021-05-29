@@ -34,6 +34,7 @@ reg [`WORD_SIZE-1:0] req_address;
 reg [`WORD_SIZE-1:0] req_data_length;
 
 reg access_memory;
+reg dma_on;
 
 // assert proper memory signal and send address through address bus
 assign read_m2 = ex_valid? 0: 'bz;
@@ -45,12 +46,27 @@ initial begin
 	busRequest = 0;
 	access_memory = 0;
 	ex_valid = 0;
+	dma_on = 0;
+end
+
+always @(posedge clk) begin
+	// 10. The DMA controller raises an interrupt
+	if (dma_on && !busRequest && !busGrant) begin
+		dma_on <= 0;
+		interrupt <= 1;
+	end
+
+	// turn off interrupt signal after one cycle
+	if (interrupt) begin
+		interrupt <= 0;
+	end
 end
 
 always @(*) begin
 	// 3. The DMA controller saves the address and dataLength sent from CPU
 	// 	  and raises a BusRequest signal
 	if (cpu_valid) begin
+		dma_on = 1;
 		req_address = address;
 		req_data_length = dataLength;
 		busRequest = 1;
@@ -79,16 +95,11 @@ always @(*) begin
 		end
 	end
 	
-	// 10. The DMA controller raises an interrupt
+	// 9. CPU clears the BG signals and enables the usage of memory buses
 	if (access_memory && !busGrant) begin
-		interrupt = 1;
 		access_memory = 0;
 	end
 
-	// turn off interrupt signal after one cycle
-	if (interrupt) begin
-		interrupt = 0;
-	end
 end
 
 endmodule
