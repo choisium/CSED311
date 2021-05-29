@@ -96,12 +96,12 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 	always @(*) begin
 		// 2. CPU send a address and dataLength to a DMA controller
 		if (ex_interrupt) begin
-			dma_valid <= 1;
-			address <= 16'h17;
-			dataLength <= 12;
+			dma_valid = 1;
+			address = 16'h17;
+			dataLength = 12;
 		end else begin
 			// dma_valid is asserted for only one cycle
-			dma_valid <= 0;
+			dma_valid = 0;
 		end
 
 		// 4. CPU receive BusRequest signal and blocks its usage of the memory port2
@@ -109,19 +109,19 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 			// when current memory access is done
 			// deassert the bus_access to block future memory access
 			if (!read_m2 && !write_m2) begin
-				bus_access <= 0;
+				bus_access = 0;
 			end
 		end
 
 		// 9. CPU clears the BG signals and enables the usage of memory buses
 		if (busGrant && !busRequest) begin
-			busGrant <= 0;
-			bus_access <= 1;
+			busGrant = 0;
+			bus_access = 1;
 		end
 
 		// 11. The CPU handles the interrupt from DMA controller
 		if (dma_interrupt) begin
-			// I don't know what to do here...
+			// do nothing
 		end
 	end
 	
