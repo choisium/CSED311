@@ -103,7 +103,7 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 			// deassert the bus_access to block future memory access
 			if (!read_m2 && !write_m2) begin
 				bus_access = 0;
-				busGrant <= 1;
+				busGrant = 1;
 			end
 		end
 
