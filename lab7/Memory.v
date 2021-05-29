@@ -313,7 +313,6 @@ module Memory(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, writ
 						memory[requested_address2 + 3] <= data2[`BLOCK_WORD_4];
 					end
 				end
-				$display("Memory [17]: %h, [1b]: %h, [1f]: %h", memory[16'h17], memory[16'h1b], memory[16'h1f]);
 			end
 
 endmodule
