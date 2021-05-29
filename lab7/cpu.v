@@ -66,6 +66,10 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 	// wires for DMA
 	reg bus_access;
 
+	// wire for halt CPU datapath
+	wire interrupt;
+	assign interrupt = ex_interrupt | dma_interrupt;
+
 	// assignments for memory access
 	assign read_m1 = i_read_m1 | d_read_m1;
 	assign address1 = i_read_m1? i_address1: d_address1;
@@ -103,7 +107,7 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 			// deassert the bus_access to block future memory access
 			if (!read_m2 && !write_m2) begin
 				bus_access = 0;
-				busGrant <= 1;
+				busGrant = 1;
 			end
 		end
 
@@ -133,6 +137,7 @@ module cpu(clk, reset_n, read_m1, address1, data1, inputReady1, read_m2, write_m
 		.data2(cpu_data2),
 		.inputReady2(cpu_inputReady2),
 		.ackOutput2(cpu_ackOutput2),
+		.interrupt(interrupt),
 		.num_inst(num_inst),
 		.output_port(output_port),
 		.is_halted(is_halted)
