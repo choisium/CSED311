@@ -24,7 +24,7 @@ output reg ex_valid;
 // interact to Memory
 output read_m2, write_m2;
 output [`WORD_SIZE-1:0] address2;
-output ackOutput2;
+input ackOutput2;
 
 
 // internal reg and wire
